@@ -1,7 +1,7 @@
 %%
 %int
 %state MAIN, CODIGO, WRITE, STRINGW, STRINGP, PRINT
-
+%unicode
 Variables = [a-zA-Z_][a-zA-Z0-9_]*
 
 %{
