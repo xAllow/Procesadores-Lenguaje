@@ -576,7 +576,7 @@ class Yylex {
             // fall through
           case 11: break;
           case 3: 
-            { sLinea += yytext().length();
+            { sLinea += Integer.parseInt(yytext().length());
             } 
             // fall through
           case 12: break;
@@ -586,12 +586,12 @@ class Yylex {
             // fall through
           case 13: break;
           case 5: 
-            { sBloq += yytext().length();;
+            { sBloq += Integer.parseInt(yytext().length());;
             } 
             // fall through
           case 14: break;
           case 6: 
-            { sDoc+= yytext().length();;
+            { sDoc+= Integer.parseInt(yytext().length());;
             } 
             // fall through
           case 15: break;

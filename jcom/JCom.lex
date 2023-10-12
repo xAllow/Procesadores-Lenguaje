@@ -1,5 +1,5 @@
 %%
-
+%int
 %unicode
 %state LINEA, BLOQUE, DOCUMENTACION, COMILLAS
 
