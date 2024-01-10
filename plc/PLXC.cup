@@ -1,0 +1,74 @@
+action code {:
+    int numEt = 0;
+    int numVar = 0;
+
+    String newEtiq(){
+        String v = new String("L"+Integer.toString(numEt));
+        numEt++;
+        return v;
+    }
+
+    String newVar(){
+        String v = new String("t"+Integer.toString(numVar));
+        numVar++;
+        return v;
+    }
+
+    :}
+
+terminal AP, CP, AC, CC, ASIGNA, EX,AND, MAS, MENOS, POR, O , PYC, DIV, IGUAL, DIFERENTE,MENOR,MAYOR;
+terminal String IF, ELSE, WHILE, DO,  FOR, PRINT;
+terminal Integer ENTERO;
+terminal MENOSUNARIO;
+terminal String IDENT;
+
+non terminal lista_de_sent;
+non terminal sentencia;
+non terminal String expresion;
+non terminal ParEt condicion;
+non terminal etqF;
+non terminal else_if;
+
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+precedence left MENOR, ASIGNA,MAYOR,DIFERENTE;
+precedence left O, AND;
+precedence left ELSE;
+precedence left MENOSUNARIO;
+
+lista_de_sent ::= sentencia 
+                | lista_de_sent sentencia
+                ;
+
+sentencia ::= expresion PYC
+            | PRINT AP expresion:e CP PYC       {:PLXC.out.println("print "+ e + ";");:}
+            | AC lista_de_sent CC
+            ;
+
+expresion ::= expresion:e1 MAS expresion:e2     {:  String v = newVar();
+                                                    PLXC.out.println(v + " = "+ e1 + " + "+e2+";");
+                                                    RESULT = v;
+                                                :}
+            | expresion:e1 MENOS expresion:e2   {:  String v = newVar();
+                                                    PLXC.out.println(v + " = "+ e1 + " - "+e2+";");
+                                                    RESULT = v;
+                                                :}
+            | expresion:e1 POR expresion:e2     {:  String v = newVar();
+                                                    PLXC.out.println(v + " = "+ e1 + " * "+e2+";");
+                                                    RESULT = v;
+                                                :}
+            | expresion:e1 DIV expresion:e2     {:  String v = newVar();
+                                                    PLXC.out.println(v + " = "+ e1 + " / "+e2+";");
+                                                    RESULT = v;
+                                                :}
+            | MENOS expresion:e1                {:  String v = newVar();
+                                                    PLXC.out.println(v + " =0 -" + e1 + ";");
+                                                    RESULT = v;
+                                                :} %prec MENOSUNARIO
+            | IDENT:i ASIGNA expresion:e1       {:  PLXC.out.println(i + " = " + e1);
+                                                    RESULT = i;
+                                                :}
+            | AP expresion:e1 CP                {:RESULT = e1;:}
+            | ENTERO:e                          {:RESULT = e.toString();:}
+            | IDENT:i                           {:RESULT = i;:}
+            ;
