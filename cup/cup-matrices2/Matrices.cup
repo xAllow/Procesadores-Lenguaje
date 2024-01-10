@@ -1,0 +1,90 @@
+import java_cup.runtime.*;
+import java.util.*;
+
+action code{:
+ArrayList<Double> fila = new ArrayList<>();
+ArrayList<ArrayList<Double>> matriz = new ArrayList<>();
+TablaSimbolos t = new TablaSimbolos();
+:}
+
+terminal ALL, CLL, AP, CP, AC, CC, COMA, PYC, ASIG, MAS, MENOS, POR, DIV, CONCATENA;
+terminal INVERSA, TRANSPUESTA, ADJUNTA, PRINT;
+terminal double NUMERO;
+terminal String IDENT;
+terminal double[] VECTOR;
+terminal double[][] MATRIZ; 
+
+non terminal emp;
+non terminal ini;
+non terminal double[][] matriz; 
+non terminal ArrayList<ArrayList<Double>> filas;
+non terminal double[] vector;
+non terminal Double num;
+non terminal double[] funcionesVector;
+non terminal double[][] funcionesMatriz;
+
+
+precedence left PRINT;
+precedence left COMA;
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+precedence left CONCATENA;
+precedence left AP, CP;
+precedence left AC, CC;
+precedence left ALL, CLL;
+precedence left PYC;
+
+
+emp ::= emp ini
+    | ini
+    ;
+
+ini ::= IDENT:i AP NUMERO:n COMA NUMERO:n2 CP ASIG  matriz:f PYC {:t.insertar(i,Matrices.subMatriz(Matrices.completar(f,(int)Math.round(n),(int)Math.round(n2)),(int)Math.round(n),(int)Math.round(n2)));:}
+    | IDENT:i ASIG funcionesMatriz:e  PYC     {:t.insertar(i,e);matriz.clear();:} 
+    | IDENT:i ASIG funcionesVector:e  PYC     {:t.insertarVector(i,e);fila.clear();:}                
+    | PRINT AP funcionesVector:m CP PYC       {:Matrices.print(m);:}
+    | PRINT AP funcionesMatriz:m CP PYC       {:Matrices.print(m);:}
+    ;
+
+
+
+
+funcionesVector ::= funcionesVector:v1 CONCATENA funcionesVector:v2  {:RESULT = Matrices.concatena(v1,v2);:}
+            | vector:v                                               {:RESULT = v;:}
+            | funcionesVector:v1 MAS funcionesVector:v2              {:RESULT = Matrices.suma(v1,v2);:}
+            ;
+
+vector ::= ALL num CLL                    {:RESULT = Matrices.toVector(fila);fila.clear();:}
+        | VECTOR:v                        {:RESULT = v;:}
+        | num:n                        {:double[] d = new double[1];
+                                            d[0] = n;
+                                            RESULT = d;
+                                            fila.clear();:}
+    ;
+
+
+funcionesMatriz ::= funcionesMatriz:v1 CONCATENA funcionesVector:v2  {:RESULT = Matrices.concatena(v1,v2);:}
+            | matriz:v                                               {:RESULT = v;:}
+            | funcionesMatriz:v1 MAS funcionesMatriz:v2              {:RESULT = Matrices.suma(v1,v2);:}
+            | funcionesVector:v1 POR funcionesMatriz:v2              {:RESULT = Matrices.producto(v1,v2);:}
+            | funcionesVector:v1 POR funcionesVector:v2              {:RESULT = Matrices.producto(v1,v2);:}
+            | funcionesMatriz:v1 POR funcionesMatriz:v2              {:RESULT = Matrices.producto(v1,v2);:}
+            | funcionesMatriz:v1 POR funcionesVector:v2              {:RESULT = Matrices.producto(v1,v2);:}
+            | funcionesMatriz:v1 AP num:n COMA num:n2 CP             {:RESULT = Matrices.subMatriz(v1,(int)Math.round(n),(int)Math.round(n2));:}
+            ;
+
+
+matriz ::= ALL filas:f CLL   {:RESULT = Matrices.toArray(f);:} 
+        | MATRIZ:i           {:RESULT = i;:}
+
+        ;
+
+filas ::= filas COMA filas    {:RESULT = matriz;:}
+    | funcionesVector:v       {:matriz.add(Matrices.toArrayList(v));:}
+    ;
+
+num ::= num COMA num          
+    | NUMERO:n        {:fila.add(n);RESULT = n;:}
+    | MENOS NUMERO:n  {:fila.add(-n); RESULT = n;:}
+    ;
+    

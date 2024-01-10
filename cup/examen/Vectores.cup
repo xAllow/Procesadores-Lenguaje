@@ -1,0 +1,118 @@
+import java_cup.runtime.*;
+import java.lang.String;
+import java.util.HashMap;
+import java.util.*;
+
+
+parser code {:
+	public void syntax_error(Symbol cur_token){
+	}
+
+	public void unrecovered_syntax_error(Symbol cur_token){
+		System.err.println( "Syntax error:"  );
+		// report_error("Syntax error", null);
+		done_parsing();
+	}
+:}
+
+
+action code {:
+	HashMap<Integer, Integer> rep = new HashMap<>();
+	ArrayList<ArrayList<Integer>> listas = new ArrayList<>();
+	ArrayList<Integer> lista = new ArrayList<>();
+	int size;
+	Integer anterior = null;
+	Integer actual;
+	public void print(HashMap<Integer,Integer> rep){
+		boolean firstEntry = true;
+		if(rep != null){
+			for (HashMap.Entry<Integer, Integer> entry : rep.entrySet()) {
+            if (!firstEntry) {
+                System.out.print(", ");
+            } else {
+                firstEntry = false;
+            }
+
+            System.out.print(entry.getValue() + ", " +entry.getKey());
+        }
+		} else {
+			System.out.print("");
+		}
+
+	}
+:}
+
+init with {:
+:}
+
+/* Terminales */
+terminal            AP, CP, COMA;
+terminal            C, D, I, L;
+terminal Integer    NUMERO;
+
+/* No terminales */
+non terminal lineas, linea, vectores, vectorC, vectorL, vectorI;
+non terminal ArrayList<Integer>lista;
+/* Precedencia */
+precedence left COMA;
+precedence left AP, CP;
+
+/* Gramatica */
+lineas ::= lineas linea
+		| linea;
+
+lineas ::= vectores;
+
+vectores ::= C AP{:System.out.print("(");:} vectorC/*{:print(rep); rep.clear();:}*/ CP {:System.out.print(")");:}
+			| L AP {:System.out.print("(");:} vectorL CP {:System.out.print("):");size+=listas.size();System.out.print(size);size= 0;listas.clear();:};
+
+vectorC ::= vectorC COMA NUMERO:n 	{:actual = n;
+										
+										if(!rep.containsKey(n) || anterior == null || actual != anterior){
+											print(rep);
+											rep.clear();
+											rep.put(n,1)
+											print(rep);;}
+										else {
+											anterior = actual;
+											rep.put(n,rep.get(n)+1);}
+									:}
+		| AP{:System.out.print("(");:} vectorC{:print(rep); rep.clear();:} CP {:System.out.print(")");:}
+		| vectores					
+		| NUMERO:n 					{:	actual = n;
+										
+										if(!rep.containsKey(n) || anterior == null || actual != anterior){
+											
+											rep.clear();
+											rep.put(n,1);
+											print(rep);}
+										else {
+											anterior = actual;
+											rep.put(n,rep.get(n)+1);}
+									:}
+		|;
+
+
+vectorL ::= vectorL COMA NUMERO:n	{:System.out.print(","+n);
+										lista.add(n);
+										listas.add((ArrayList<Integer>)lista.clone());
+										lista.clear();
+										:}
+		| vectorL COMA{:System.out.print(",");:} AP {:System.out.print("(");:} lista CP {:System.out.print("):");System.out.print(lista.size());size+=1;lista.clear();:}
+		|AP {:System.out.print("(");:} lista CP {:System.out.print("):");System.out.print(lista.size());size+=1;lista.clear();:}
+		| NUMERO:n 					{:System.out.print(n);
+									lista.add(n);
+									listas.add((ArrayList<Integer>)lista.clone());
+									lista.clear();:}
+		|;
+			  																			
+
+lista ::= lista COMA NUMERO:n	{:	System.out.print(","+n);
+									lista.add(n);
+									RESULT = lista;:}
+
+		| NUMERO:n 			{:	System.out.print(n);
+								lista.add(n);:}
+		| AP lista CP 
+		|;
+

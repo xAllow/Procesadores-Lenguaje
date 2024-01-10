@@ -1,0 +1,63 @@
+// Calculadora (version 2) 
+import java_cup.runtime.*;
+
+parser code {:
+    public void syntax_error(Symbol cur_token) {
+    }
+
+    public void unrecovered_syntax_error(Symbol cur_token){:
+        System.err.println("Error de sintaxis en linea " + Calculadora.lex.getLine() + " columna " + Calculadora.lex.getColumn() + " token " + sym.terminalNames[cur_token.sym]);
+        done_parsing();
+    :}
+:}
+
+action code{:
+    HashMap<String, Integer> tabla = new HashMap<String, Integer>();
+:}
+
+init with {:action_obj.tabla = new HashMap<String, Integer>();:}
+/* Terminales */
+terminal            MAS, MENOS, POR, DIV, MENOSUNARIO, IGUAL;
+terminal            AP, CP;
+terminal            PYC;
+terminal            EOLN;
+terminal String     ID;
+terminal Integer    NUMERO;
+
+/* No terminales */
+non terminal         listaExp;
+non terminal         linea;
+non terminal Integer exp;
+
+/* Precedencia */
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+precedence left MENOSUNARIO;
+
+/* Gramatica */
+listaExp      ::= listaExp linea      
+            | linea 
+            ;
+linea	  ::= exp:e EOLN            {: System.out.println(e); :}
+            | EOLN                 
+            ;
+exp       ::= exp:e1 MAS exp:e2     {: RESULT = new Integer(e1.intValue() + e2.intValue()); :}
+            | exp:e1 MENOS exp:e2   {: RESULT = new Integer(e1.intValue() - e2.intValue()); :}
+            | exp:e1 POR exp:e2     {: RESULT = new Integer(e1.intValue() * e2.intValue()); :}
+            | exp:e1 DIV exp:e2     {: RESULT = new Integer(e1.intValue() / e2.intValue()); :}
+	        | MENOS exp:e1          {: RESULT = new Integer(0 - e1.intValue()); :}  %prec MENOSUNARIO 
+            | AP exp:e1 CP          {: RESULT = e1; :}
+            | ID:i          {:
+                if(tabla.containsKey(i))
+                    RESULT = Integer.valueOf(tabla.get(i));
+                else
+                    RESULT = new Integer(0);
+            :}
+	        | NUMERO:n              {: RESULT = n; :}
+            | ID:i IGUAL exp:e {:
+                tabla.put(i,e);
+                RESULT=e;
+            :}
+	        ;
+
+

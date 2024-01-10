@@ -1,0 +1,59 @@
+import java_cup.runtime.*;
+
+action code {:
+boolean lista = false;
+boolean empieza = false;
+private static boolean comprobarS(String cadena){
+    if(cadena.charAt(cadena.length()-1) == 's') return true;
+    else return false;
+    }
+:}
+
+
+terminal String OPEN_TAG;
+terminal String CLOSE_TAG;
+terminal String TEXT;
+
+non terminal pri;
+non terminal String emp;
+non terminal String ini;
+non terminal String exp;
+
+precedence left OPEN_TAG, CLOSE_TAG;
+precedence left TEXT;
+
+pri ::= emp:e                   {:System.out.println("{" + e + "}");:}
+    ;
+
+emp ::= emp:e ini:i             {:RESULT = e +", " + i;:}                     
+    | ini:i                     {:RESULT = i;:}
+    ;
+
+ini ::= OPEN_TAG:v exp:e CLOSE_TAG:v2  {:if(!lista) {
+                                            RESULT = v + ":" + e;
+                                        }
+                                        else{
+                                            if(empieza){
+                                                RESULT = v + ":[" + e; 
+                                                empieza = false;
+                                            }else{RESULT = e;}
+                                            }:}
+    | OPEN_TAG:v{:if(comprobarS(v)){lista = true;empieza = true;}:} CLOSE_TAG:v2       {:if(!lista) {RESULT = v + ":";}
+                                                                            else{
+                                                                                if(empieza){
+                                                                                    RESULT = v.substring(0,v.length()-1) + ":[]"; 
+                                                                                    empieza = false;
+                                                                                }
+                                                                            }:}
+    | OPEN_TAG:v {:if(comprobarS(v)){lista = true;
+                                    System.out.println(v);
+                                    empieza = true;}:} emp:e CLOSE_TAG:v2         {:if(!lista){RESULT = v + ":{\n" + e + "}";}
+                                                                                    else{
+                                                                                        RESULT = e + "]";
+                                                                                        lista = false;
+                                                                                    }:}
+    ;
+
+
+exp ::= TEXT:e                    {:RESULT = e;:}
+    ;

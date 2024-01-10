@@ -1,0 +1,22 @@
+import java_cup.runtime.*;
+
+/* Definición de símbolos terminales */
+terminal INT, DOUBLE, PYC, IDENT;
+
+
+/* Definición de símbolos no terminales */
+non terminal listExpr, int, double;
+
+
+
+/* Reglas de producción */
+listExpr ::= INT int PYC
+            |DOUBLE double PYC
+            ;
+
+int ::= int IDENT:var {:System.out.print(var+":int; ");:}
+    | IDENT:var {:System.out.print(var+":int; ");:}
+    ;
+double ::= double IDENT:var {:System.out.print(var+":double; ");:}
+    | IDENT:var {:System.out.print(var+":double; ");:}
+    ;

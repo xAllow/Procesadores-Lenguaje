@@ -1,0 +1,12 @@
+import java_cup.runtime.*;
+
+terminal INT, DOUBLE, COMA, DP, IDENT;
+terminal String PYC;
+
+non terminal lista, variables;
+
+lista ::=  variables:v DP INT PYC {:System.out.print("int "+v+";");:}
+        | variables:v DP DOUBLE PYC {:System.out.print("double "+v+";");:}
+        ;
+variables ::= IDENT:n COMA:c variables:v {: RESULT=n + "," + v; :}
+            | IDENT:n {: RESULT = n; :};

@@ -1,0 +1,11 @@
+lineaExp -> lineaExp linea
+lineExp -> linea
+linea -> exp ;
+linea -> ;
+exp -> exp + exp 
+exp -> exp - exp 
+exp -> exp * exp 
+exp -> exp / exp 
+exp -> ( exp )
+exp -> -exp 
+exp -> NUMERO

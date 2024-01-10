@@ -1,0 +1,105 @@
+import java.util.*;
+
+
+action code {:
+    TablaSimbolos t = new TablaSimbolos();
+    ArrayList<Double> lista = new ArrayList<>();
+    boolean cont1;
+    boolean cont2;
+    int pos = 0;
+:};
+
+
+terminal ALL, CLL, AP, CP, AC, CC, COMA, PYC, ASIG, MAS, MENOS, POR, DIV, CONCATENA, INTERSECCION;
+terminal double[][] MATRIZ;
+terminal double[] VECTOR;
+terminal double[] CONJUNTO;
+terminal String SET, INVERSA, TRANSPUESTA, ADJUNTA, PRINT, IDENT;
+terminal Double NUMERO;
+
+non terminal lineas, linea, asignacion, imprimir;
+non terminal ArrayList<Double> listas;
+non terminal double[] funcion;
+
+
+
+precedence left PRINT;
+precedence left COMA;
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+precedence left CONCATENA;
+
+precedence left INTERSECCION;
+precedence left AP, CP;
+precedence left AC, CC;
+precedence left ALL, CLL;
+precedence left PYC;
+precedence left SET;
+
+
+
+
+lineas ::= lineas linea 
+        | linea 
+        ;
+
+linea ::= imprimir PYC
+        | asignacion PYC
+        ;
+
+imprimir ::= PRINT AP funcion:f CP {:Matrices.print(f);:}
+        ;
+
+
+funcion ::= ALL listas CLL {:RESULT = Matrices.toVector(lista);
+                            lista.clear();:} 
+        | CONJUNTO:v        {:RESULT = v;
+                            if(pos == 0){
+                                cont1 = true;
+                                pos++;
+                            }else{
+                                cont2 = true;
+                                pos = 0;
+                            }:}
+
+        | VECTOR:v          {:RESULT = v;
+                            if(pos == 0){
+                                cont1 = false;
+                                pos++;
+                            }else{
+                                cont2 = false;
+                                pos = 0;
+                            }:}
+        | funcion:c1 CONCATENA funcion:c2 {:if(cont1 && cont2){RESULT = Matrices.union(c1,c2);}
+                                            else{RESULT = Matrices.concatena(c1,c2);} :}
+        | funcion:c1 MAS funcion:c2 {:RESULT = Matrices.suma(c1,c2); :}
+        | funcion:c1 INTERSECCION funcion:c2 {:RESULT = Matrices.interseccion(c1,c2); :}
+        | SET funcion:f                      {:RESULT = Matrices.toSet(f);
+                                                if(pos == 0){
+                                                        cont1 = true;
+                                                        pos++;
+                                             }else{
+                                                        cont2 = true;
+                                                       pos = 0;
+                                             }:}
+        | NUMERO:n                    {:double[] a = new double [1];
+                                        a[0] = n;
+                                        RESULT = a;:}
+
+        ;
+
+asignacion ::= IDENT:i ASIG funcion:f {:t.insertarVector(i,f);
+                                            lista.clear();:}
+
+            
+            ;
+
+
+
+
+
+listas ::= listas COMA NUMERO:n    {:lista.add(n);:}
+        | listas COMA MENOS NUMERO:n    {:lista.add(-n);:}
+        | NUMERO:n                {:lista.add(n);:}
+        | MENOS NUMERO:n            {:lista.add(-n);:}
+        ;

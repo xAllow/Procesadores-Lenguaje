@@ -1,0 +1,22 @@
+terminal AC, CC, COMA;
+terminal Integer NUMERO;
+
+
+non terminal inic;
+non terminal Integer lista, exp;
+
+precedence left COMA;
+
+inic ::= lista:l {:System.out.println(l);:};
+
+lista ::= AC exp:e CC {:RESULT = e;:}
+        | AC CC {:RESULT = 0;:}
+        ;
+
+//Una lista puede estar compuesta por mas lista o por una expresion
+
+exp ::= NUMERO:n {:RESULT = n;:}
+    | exp:a COMA exp:b {:RESULT = a+b;:}
+    | AC exp:e CC {:RESULT = e*2;:}
+    | AC CC {:RESULT= 0;:}
+    ; 

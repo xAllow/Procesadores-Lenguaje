@@ -1,0 +1,29 @@
+/* TERMINALES*/
+terminal MAS, MENOS, MULTI, DIVID, AP, CP, PYC, MENOSUNARIO;
+terminal Integer NUMERO;
+
+/*No terminales */
+non terminal listaExp, linea;
+non terminal Integer exp;
+
+/* Precedencia (De menor a mayor precedencia) */
+precedence left MAS, MENOS;
+precedence left MULTI, DIVID;
+precedence left MENOSUNARIO;
+
+/* Gramatica */
+listaExp ::= listaExp linea
+            | linea 
+            ;
+linea    ::= exp PYC
+            | PYC
+            ;
+exp      ::= exp:v1 MAS exp:v2 {:RESULT=Integer.valueOf(v1.intValueOf()+v2.intValueOf());:}
+            | exp MENOS exp 
+            | exp MULTI exp
+            | exp DIVID exp 
+            | exp DIVID exp 
+            | MENOS exp %prec MENOSUNARIO
+            | AP exp CP
+            | NUMERO:v {:RESULT=v;:}
+            ;

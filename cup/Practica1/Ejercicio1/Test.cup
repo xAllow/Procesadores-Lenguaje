@@ -1,0 +1,14 @@
+import java_cup.runtime.*;
+
+terminal IDENT;
+terminal NUMERO;
+
+non terminal Lista;
+non terminal Elemento;
+
+Lista ::= Elemento:e Lista  {:System.out.print(e + " "); :}
+        | Elemento:e  {:System.out.print(e + " ");:};
+
+Elemento ::= IDENT:cadena {:RESULT = cadena; :}
+        | NUMERO:num {:RESULT = num;:}
+        ;

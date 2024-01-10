@@ -1,0 +1,34 @@
+import java_cup.runtime.*;
+
+
+action code{:
+boolean p = true;
+boolean f = true;
+int x,y;
+:}
+
+
+terminal Integer NUMERO;
+
+
+non terminal ini;
+non terminal Integer exp;
+
+
+
+ini ::= exp:e {:if(f) {System.out.println("SI");}
+        else {System.out.println("NO");}:};
+
+exp::= exp:e1 NUMERO:n {:if(p){
+                        p = false;
+                        x = e1;
+                        y = n;
+                        }else{
+                            if(x+y != n){
+                            f = false;
+                            }else{
+                                x = y;
+                                y = n;
+                            }
+                        } :}
+    | NUMERO:n  {:RESULT = n;:};

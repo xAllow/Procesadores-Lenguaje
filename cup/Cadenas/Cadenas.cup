@@ -1,0 +1,45 @@
+import java_cup.runtime.*;
+import java.util.*;
+
+action code {:
+    HashMap<String, String> map = new HashMap<>();
+    
+:};
+
+terminal MAS, MENOS, IGUAL, AP, CP, PYC, PUNTO, COMA, PRINT, SUBSTR, SIZE;
+terminal String CADENA, ID;
+terminal Integer NUMERO;
+
+non terminal linea, lineas, asignacion, funcion;
+non terminal String cadenas;
+non terminal Integer subs;
+
+precedence left PRINT;
+precedence left COMA;
+precedence left MAS, MENOS;
+precedence left PUNTO, SUBSTR;
+precedence left AP, CP;
+
+lineas ::= lineas linea 
+        | linea ;
+
+linea ::= asignacion PYC
+        | funcion PYC;
+
+funcion ::= PRINT AP cadenas:c CP {:
+System.out.println(c);:};
+
+asignacion ::= ID:v IGUAL cadenas:c {:map.put(v,c);:} ;
+
+cadenas ::= cadenas:cs MAS cadenas:c {:RESULT = cs + c;:}
+            | cadenas:c PUNTO SUBSTR AP subs:n1 COMA subs:n2 CP {:
+                RESULT = c.substring(n1,n1+n2);
+            :}
+            | AP cadenas:c CP {:RESULT =c;:}
+            | CADENA:c {:RESULT = c;:}
+            | ID:v {:RESULT = map.get(v);:};
+            
+subs ::=| cadenas:c PUNTO SIZE AP CP {:RESULT = c.length();:}
+        | subs:n1 MAS subs:n2 {:RESULT=n1+n2;:}
+        | subs:n1 MENOS subs:n2 {:RESULT=n1-n2;:}
+        | NUMERO:n {:RESULT=n;:};

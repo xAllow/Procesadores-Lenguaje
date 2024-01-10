@@ -1,0 +1,193 @@
+import java_cup.runtime.*;
+import java.util.*;
+
+action code {:
+    double[][] matriz; 
+    ArrayList<ArrayList<Double>> filas = new ArrayList();
+    ArrayList<Double> fila = new ArrayList();
+    boolean ok = false;
+
+    public boolean comprobarMatriz(ArrayList<ArrayList<Double>> matriz){
+        ok = true;
+        if(matriz == null | matriz.isEmpty()){
+            throw new IllegalArgumentException("La matriz no puede estar vacía.");
+        }
+        int longitudPrimeraFila = matriz.get(0).size();
+
+        for (int i = 1; i < matriz.size(); i++) {
+
+            if (matriz.get(i).size() != longitudPrimeraFila) {
+                // Las filas no tienen la misma longitud
+                error(1);
+                ok = false;
+            }
+        }
+        return ok;
+    }
+    public boolean esCuadrada(double[][] matriz){
+        
+        return Matrices.filas(matriz)==Matrices.columnas(matriz);
+    }
+
+    public boolean comprobarMulti(double[][] matriz1,double[][]  matriz2){
+        return (Matrices.columnas(matriz1)==Matrices.filas(matriz2));
+    }
+
+    public boolean comprobarSuma(double[][] matriz1,double[][]  matriz2) {
+        return Matrices.filas(matriz1) == Matrices.filas(matriz2) && Matrices.columnas(matriz1) == Matrices.columnas(matriz2);
+    }
+    public void error(int id) {
+        switch (id) {
+            case 1 :
+                System.err.print(Matrices.ERROR_FILAS);
+                System.exit(1);
+            
+            case 2 :
+                System.err.print(Matrices.ERROR_INVERSA);
+                System.exit(1);
+
+            case 3 :
+                System.err.print(Matrices.ERROR_ADJUNTA);
+                System.exit(1);
+                
+            case 4 :
+                System.err.print(Matrices.ERROR_PROD);
+                System.exit(1);
+                
+            case 5 :
+                System.err.print(Matrices.ERROR_SUMA);
+                System.exit(1);
+            
+            case 6 :
+                System.err.print(TablaSimbolos.ERROR_NOEXISTE);
+                System.exit(1);
+            
+            default:
+                System.err.print("Error desconocido");
+                System.exit(1);
+        }
+        
+        ok = true;
+    }
+:};
+
+terminal AP, CP, AC, CC, COMA, PYC;
+terminal ALL, CLL, ASIG, MAS, MENOS, POR, DIV;
+terminal String PRINT, INVERSA, TRANSPUESTA, ADJUNTA, IDENT;
+terminal Double NUMERO;
+
+non terminal linea, lineas, funciones, asignaciones;
+non terminal ArrayList<ArrayList<Double>> filas, operacion, matriz;
+non terminal ArrayList<Double> fila;
+
+
+precedence left PRINT;
+precedence left TRANSPUESTA,INVERSA;
+precedence left COMA;
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+precedence left AP, CP;
+precedence left AC, CC;
+
+lineas ::= lineas linea 
+        | linea;
+
+linea ::= funciones PYC
+        | asignaciones PYC ;
+
+
+asignaciones ::= IDENT:var ASIG operacion:a{:
+    TablaSimbolos.insertar(var, Matrices.toArray(a));
+    :};
+
+funciones ::= PRINT AP  operacion:m CP  {:
+                Matrices.print(m);
+            :}
+            | TRANSPUESTA AP operacion:m CP  {:
+                filas = Matrices.toArrayList(Matrices.transpuesta(Matrices.toArray(m)));
+            :}
+            | ADJUNTA AP operacion:m CP  {:
+                if(esCuadrada(Matrices.toArray(m)))
+                    filas = Matrices.toArrayList(Matrices.adjunta(Matrices.toArray(m)));
+                else 
+                    error(3);
+            :}
+            | INVERSA AP operacion:m CP {:
+                if(esCuadrada(Matrices.toArray(m)))
+                    filas =Matrices.toArrayList(Matrices.inversa(Matrices.toArray(m)));
+                else 
+                    error(2);
+            :};
+
+operacion ::= operacion:m1 POR operacion:m2 {:
+                double[][] a1 = Matrices.toArray(m1);
+                double[][] a2 = Matrices.toArray(m2);
+                if(comprobarMulti(a1,a2)){
+                    RESULT=Matrices.toArrayList(Matrices.producto(a1,a2));
+                } else {
+                    error(4);
+                }
+                
+            :}
+            |operacion:m1 DIV operacion:m2 {:
+                double[][] a1 = Matrices.toArray(m1);
+                double[][] a2 = Matrices.toArray(m2);
+                if(comprobarMulti(a1,a2)){
+                    RESULT=Matrices.toArrayList(Matrices.producto(a1,Matrices.inversa(a2)));
+                } else {
+                    error(4);
+                }
+                
+            :}
+            | operacion:m1 MAS operacion:m2 {:
+                double[][] a1 = Matrices.toArray(m1);
+                double[][] a2 = Matrices.toArray(m2);
+                if(comprobarSuma(a1,a2)){
+                    RESULT=Matrices.toArrayList(Matrices.suma(a1,a2));
+                } else {
+                    error(5);
+                }
+                
+            :}
+            | operacion:m1 MENOS operacion:m2 {:
+                double[][] a1 = Matrices.toArray(m1);
+                double[][] a2 = Matrices.toArray(m2);
+                if(comprobarSuma(a1,a2)){
+                    RESULT=Matrices.toArrayList(Matrices.suma(a1,Matrices.producto(-1, a2)));
+                } else {
+                    error(5);
+                }
+                
+            :}
+            | AP operacion:m CP {:RESULT = m;:}
+            | funciones {:RESULT = filas;:}
+            | matriz:m {:
+                if(comprobarMatriz(m)){
+                    RESULT=m;
+                }
+                :};
+            
+matriz ::= AC filas:f CC {:RESULT=f;
+                filas = new ArrayList<ArrayList<Double>>();
+            :}
+            | IDENT:var {:
+                RESULT = Matrices.toArrayList(TablaSimbolos.buscar(var));
+            :};
+
+filas ::=  filas PYC fila:f  {:
+                            filas.add((ArrayList<Double>)fila.clone());
+                            RESULT = filas;
+                            fila.clear();
+                         :}
+        | fila:f {:
+            filas.add((ArrayList<Double>)fila.clone());
+            RESULT = filas;
+            fila.clear();
+        :};
+
+fila ::= fila COMA NUMERO:n {:
+            fila.add(n);
+        :}
+        |NUMERO: n {:
+            fila.add(n);
+        :};

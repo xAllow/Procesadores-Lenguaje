@@ -1,0 +1,4 @@
+    cup *.cup 
+    jflex *.flex
+    javac -cp /usr/share/java/java-cup-0.11b-runtime.jar:. *.java
+    java -cp /usr/share/java/java-cup-0.11b-runtime.jar:. "Nombre programa" *.txt

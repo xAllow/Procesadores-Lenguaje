@@ -1,0 +1,8 @@
+a = [1, 2, 3 ; 6, 5, 4 ; 8, 7, 9];
+print(a);
+b = transpuesta(a);
+print(b);
+c = [1,2,3,4; 5,6,7,8];
+print(c+c);
+f = c * transpuesta(c);
+print(inversa(f));
