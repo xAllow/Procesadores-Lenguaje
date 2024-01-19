@@ -1,185 +1,171 @@
-action code {:
+import java_cup.runtime.*;
+
+action code{:
+   
     int numEt = 0;
     int numVar = 0;
-    TablaSimbolos tabla = new TablaSimbolos();
+    
     String newEtiq(){
         String v = new String("L"+Integer.toString(numEt));
         numEt++;
         return v;
     }
 
-    String newVar(){
+    String newTemp(){
         String v = new String("t"+Integer.toString(numVar));
         numVar++;
         return v;
     }
-    
-    class ParET {
+    public class ParEt {
         public String sv, sf;
-        public ParET(String v, String f){
+        public ParEt(String v, String f){
             sv = v;
             sf = f;
         }
     }
+:};
 
-    class EtFor(){
-        public string ee, ec;
-    }
-    /*
-    class ParET {
-        public String ef, final;
-        public ParET(String v, String f){
-            sv = v;
-            sf = f;
-        }
-    }
-    */
-:}
-/*
-Otra forma de hacer la sentencia if, devolviendo un entero para saber si se cumple o no
-*/
-
-terminal    IF, ELSE, DO, WHILE, FOR, PRINT;        // Funciones del lenguaje
-terminal    MENOR,MAYOR, DIFERENTE, IGUAL, AND, OR, ASIGNA;    // Operadores lógicos
-terminal    MAS, MENOS, POR, DIV, MENOSUNARIO,SUMA;         // Operadores matemáticos
-terminal    AP, CP, AC, CC, AL, CL;                 // Aperturas y cierres
-terminal    PYC;                                    // Fin de línea
+terminal AP, CP, AC, CC,EQLN, EX,AND, MAS, MENOS, POR, O , PYC, DIV, IGUAL, DIFERENTE,MENOR,MAYOR;
+terminal String IF, ELSE, WHILE, DO,  FOR, PRINT;
 terminal Integer ENTERO;
+terminal MENOSUNARIO;
 terminal String IDENT;
 
-non terminal ParET Condicion;
-non terminal Integer IBloque;
-//non terminal String condicion;
-//
-non terminal EtFor Etiq_for;
-non terminal String Expresion, EtiqF;
-non terminal Lista_de_sent, Sentencia, Else_if;
+non terminal lista_de_sent;
+non terminal sentencia;
+non terminal String expresion;
+non terminal ParEt condicion;
+non terminal etqF;
+non terminal else_if;
+non terminal etqW;
 
 
+precedence left IF, ELSE, DO, WHILE, FOR, PRINT;
 precedence left MAS, MENOS;
 precedence left POR, DIV;
+precedence left MENOR,MAYOR,DIFERENTE;
+precedence left O, AND;
+
+precedence left IDENT, ENTERO;
 precedence left MENOSUNARIO;
 
-Lista_de_sent ::= Sentencia
-                |  Lista_de_sent Sentencia;
+lista_de_sent ::= sentencia lista_de_sent
+                | sentencia
+                ;
 
-/*
-Sentencia ::= IF Etiq_salto:e AP Condicion:c CP {:PLC.out.println("if ("+ c + "== 0) goto "+e.ef+";"):}
-                                Sentencia       {:PLC.out.println("goto "+e.efinal+";");
-                                                PLC.out.println(e.ef+":");:}
-                                Else_if         {:PLC.out.println(e.final +":"):};
-                                                                    
+sentencia ::= expresion PYC
+        | IF etqF:f AP condicion:c              {:PLC.out.println(c.sv + ":");:}    
 
-Etiq_salto ::= {:ParEt e = new ParEt();
-                e.ef = newEtiq();
-                e.efinal = newEtiq();
-                RESULT= e;:}
+        CP sentencia                            {:PLC.out.println("goto " + f + ";");
+                                                  PLC.out.println(c.sf + ":");:}  
+        else_if                                 {:PLC.out.println(f + ":");:}  
 
-Condicion ::= Expresion:e1 IGUAL Expresion:e2 {:String v = newVar();
-                                                String e = newEtiq();
-                                                PLC.out.println(v +"= q;")
-                                                PLC.out.println(if ("+e1+"=="+e2+") goto "+e+";");
-                                                PLC.out.print(v +"=0");
-                                                PLC.out.println(e+":");
-                                                RESULT = v;:}
-            | Condicion:c1 Etiq_Final:e {:String v = newVar();
-                                        PLC.out.println(v+ "= 0";);++
+        | WHILE etqW:w                          {:PLC.out.println(w+":");:}
+        AP condicion:c                          {:PLC.out.println(c.sv+":");:}
+        CP sentencia                            {:PLC.out.println("goto "+ w+";");
+                                                  PLC.out.println(c.sf + ":");:} 
+        
+        | DO etqW:w                             {:PLC.out.println(w+":");:}
+        sentencia                              
+        WHILE AP condicion:c CP PYC             {:PLC.out.println(c.sv+":");
+                                                  PLC.out.println("goto "+w+";");
+                                                  PLC.out.println(c.sf+":");:}
+                    
+        | FOR etqF:f1
+        AP expresion PYC                        {:PLC.out.println(f1+":");:}
+        etqF:f2 condicion:c PYC                  {:PLC.out.println(f2+":");:}
+        expresion CP                                  {:PLC.out.println("goto "+f1+";");
+                                                  PLC.out.println(c.sv+":");:}
+        sentencia                               {:PLC.out.println("goto "+f2+";");
+                                                  PLC.out.println(c.sf+":");:}
 
+        | PRINT AP expresion:e1 CP PYC          {:PLC.out.println("print " + e1 + ";");:}
 
+        | AC  lista_de_sent CC                
+        ;
 
-                                            :}
+etqF    ::= {:RESULT = newEtiq();:}
+        ;
 
-Etiq_Final ::= Stri
-*/
-Sentencia ::= Expresion PYC
-            | FOR AP Expresion:e1 PYC Etiq_for:e {:PLC.out.println(e.ec+":");:}
-                                Condicion:c PYC {:PLC.out.println(e.ee+":");:}
-                                Expresion:e2 CP {:PLC.out.println("goto "+e.ec+";");
-                                                  PLC.out.println(c.ev+":");:}
-                                Sentencia       {:PLC.out.println("goto "+e.ee+";");
-                                                 PLC.out.println(c.ef+":"):}
-            | IF EtiqF:f AP Condicion:c CP  {:PLC.out.println(c.sv+":");:}
-                    Sentencia       {:PLC.out.println("goto "+f+";"); 
-                                      PLC.out.println(c.sf+":");:}
-                    Else_if         {:PLC.out.println(f+":");:}
-            | AC IBloque:b Lista_de_sent CC {:Tabla.borrarBloque(TablaSimbolos.bActual);
-                                            TablaSimbolos.bActual = b.intValue();:}
-            | AC CC
-            ;
-IBloque ::= {:RESULT = Integer.valueOf(TablaSimbolos.newBloque());:};
-Etiq_for ::= {:EtFor e = new EtFor();
-            e.ee = newEtiq();
-            e.ec = newEtiq();
-            RESULT = e;:}
-            ;
-EtiqF ::= {:RESULT = newEtiq();:};
+etqW    ::= {:RESULT = newEtiq();:};
 
-Else_if ::= ELSE Sentencia
+else_if ::= ELSE sentencia
             | 
             ;
 
-Expresion ::= ENTERO:e {:RESULT = e.toString();:}
-            | IDENT: i {:RESULT = i;:}
-            | Expresion:e1 MAS Expresion:e2 {:  String vDest = newVar();
-                                                PLC.out.println(vDest+"="+e1+"+"+e2+";");
-                                                RESULT=vDest;:}
-            | Expresion:e1 MENOS Expresion:e2 {:  String vDest = newVar();
-                                                PLC.out.println(vDest+"="+e1+"-"+e2+";");
-                                                RESULT=vDest;:}
-            | Expresion:e1 POR Expresion:e2 {:  String vDest = newVar();
-                                                PLC.out.println(vDest+"="+e1+"*"+e2+";");
-                                                RESULT=vDest;:}
-            | Expresion:e1 DIV Expresion:e2 {:  String vDest = newVar();
-                                                PLC.out.println(vDest+"="+e1+"/"+e2+";");
-                                                RESULT=vDest;:}
-            | MENOS Expresion:e1            {:  String vDest = newVar();
-                                                PLC.out.println(vDest+"=0-"+e1+";");
-                                                RESULT=vDest;:}%prec MENOSUNARIO
-            | AP Expresion:e CP             {:  RESULT=e;:}
-            | IDENT:i ASIGNA Expresion:e    {:  PLC.out.println(i+"="+e+";");
-                                                RESULT=i;:}
+expresion ::= expresion:e1 MAS expresion:e2     {:String vdest = newTemp();
+                                                PLC.out.println(vdest + " = " + e1 + " + " + e2 + ";");
+                                                RESULT = vdest;:}
+        | expresion:e1 MENOS expresion:e2       {:String vdest = newTemp();
+                                                PLC.out.println(vdest + " = " + e1 + " - " + e2 + ";");
+                                                RESULT = vdest;:}
 
-                                                
-            | IDENT:i ASIGNA Expresion:e {:if(!tabla.contiene(i)) //errorYPara("asigna",i);
-                                        Objeto o=tabla.objeto(i);
-                                        if(!(o.instanceof Instancia)) //errorYPara();
-                                        Vector<Objeto> p = new Vector<>();
-                                        p.add(e);
-                                        RESULT = o.metodos("asigna",p);
-                                        :}
-            | Expresion:e1 SUMA Expresion:e2 {:
-                                        Vector<Objeto> p = new Vector<>();
-                                        p.add(e2);
-                                        RESULT = e1.metodos("suma",p);
-                                        :}
-            ;
+        | expresion:e1 POR expresion:e2         {:String vdest = newTemp();
+                                                PLC.out.println(vdest + " = " + e1 + " * " + e2 + ";");
+                                                RESULT = vdest;:}
 
-Condicion ::= Expresion:e1 IGUAL Expresion:e2 {:ParEt et = new ParET(newEtiq(), newEtiq());
-                                                PLC.out.println("if ("+e1+"=="+e2+")goto"+et.sv+";");
-                                                PLC.out.println("goto "+et.sf+";");
-                                                RESULT = et;
-                                                :}
-            | Expresion:e1 DIFERENTE Expresion:e2 {:ParEt et = new ParET(newEtiq(), newEtiq());
-                                                PLC.out.println("if ("+e1+"=="+e2+")goto"+et.sf+";");
-                                                PLC.out.println("goto "+et.sv+";");
-                                                RESULT = et;
-                                                :}
-            | ADMIN Condicion:c                 {RESULT = new ParET(c.sf, c.sv);}
+        | expresion:e1 DIV expresion:e2         {:String vdest = newTemp();
+                                                PLC.out.println(vdest + " = " + e1 + " / " + e2 + ";");
+                                                RESULT = vdest;:}
 
-            | Expresion:e1 MENOR Expresion:e2  {: ParEt et = new ParET(newEtiq(), newEtiq());
-                                                PLC.out.println("if ("+e1+"<"+e2+")goto"+et.sv+";");
-                                                PLC.out.println("goto "+et.sf+";");
-                                                RESULT = et;
-                                                :}
-            | Expresion:e1 MAYOR Expresion:e2  {: ParEt et = new ParET(newEtiq(), newEtiq());
-                                                PLC.out.println("if ("+e1+"<"+e2+")goto"+et.sf+";");
-                                                PLC.out.println("goto "+et.sv+";");
-                                                RESULT = et;
-                                                :}
-            | Condicion:c1 AND {:PLC.out.println(c1.sv+":");:} Condicion:c2 {:RESULT = new ParET(newEtiq(), newEtiq());
-                                                                              PLC.out.println(c2.sv+":"); 
-                                                                              PLC.out.println("goto "+et.sv+";");
-                                                                              PLC.out.println(c1.sf+":");:
-                                                                              PLC.out.println(c2.sf+":");
-                                                                              PLC.out.println("goto "+et.sf+";");}
-            ;
+        | IDENT:i                               {:RESULT = i;:}
+
+        | ENTERO:n                              {:RESULT = n.toString();:}
+       
+        | IDENT:i EQLN expresion:e              {:PLC.out.println(i + " = " + e + ";");
+                                                RESULT = i;:}
+        | AP expresion:e CP                     {:RESULT = e;:}
+        | MENOS expresion:e                     {:String vdest = newTemp();
+                                                PLC.out.println(vdest + "= 0 - " + e+";");
+                                                RESULT = vdest;:} %prec MENOSUNARIO
+        ;
+    
+condicion ::= expresion:e1 IGUAL expresion:e2   {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLC.out.println("if (" + e1 + " == " + e2 + ") " + "goto " +  v1 +";");
+                                                PLC.out.println("goto " + v2 + ";");
+                                                RESULT = new ParEt(v1,v2);:}
+
+        | expresion:e1 DIFERENTE expresion:e2     {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLC.out.println("if (" + e1 + " == " + e2 + ") " + "goto " +  v2 +";");
+                                                PLC.out.println("goto " + v1 + ";");
+                                                RESULT = new ParEt(v1,v2);:} 
+
+        | expresion:e1 MENOR EQLN expresion:e2  {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLC.out.println("if (" + e2 + " < " + e1 + ") " + "goto " +  v2 +";");
+                                                PLC.out.println("goto " + v1 + ";");
+                                                RESULT = new ParEt(v1,v2);:}   
+
+
+        | expresion:e1 MENOR  expresion:e2  {:  String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLC.out.println("if (" + e1 + " < " + e2 + ") " + "goto " +  v1 +";");
+                                                PLC.out.println("goto " + v2 + ";");
+                                                RESULT = new ParEt(v1,v2);:}     
+
+        | expresion:e1 MAYOR EQLN expresion:e2  {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLC.out.println("if (" + e1 + " < " + e2 + ") " + "goto " +  v2 +";");
+                                                PLC.out.println("goto " + v1 + ";");
+                                                RESULT = new ParEt(v1,v2);:}
+        | expresion:e1 MAYOR  expresion:e2  {:  String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLC.out.println("if (" + e2 + " < " + e1 + ") " + "goto " +  v1 +";");
+                                                PLC.out.println("goto " + v2 + ";");
+                                                RESULT = new ParEt(v1,v2);:}    
+            
+        | condicion:c1 AND                      {:PLC.out.println(c1.sv + ":");:} 
+        condicion:c2                            {:PLC.out.println(c1.sf + ":");
+                                                  PLC.out.println("goto "+c2.sf+";");
+                                                  RESULT = c2;:}
+                                                  
+        | condicion:c1 O                       {:PLC.out.println(c1.sf + ":");:} 
+        condicion:c2                            {:PLC.out.println(c1.sv + ":");
+                                                  PLC.out.println("goto "+c2.sv+";");
+                                                  RESULT = c2;:}
+        | AP condicion CP                                     
+
+        |EX condicion:e                         {:RESULT = new ParEt(e.sf,e.sv);:}                                         
+        ;

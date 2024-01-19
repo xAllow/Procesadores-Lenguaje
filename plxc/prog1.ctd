@@ -1,0 +1,30 @@
+   $t0[0] = 97;
+   $t0[1] = 98;
+   $t0[2] = 99;
+   $$t0_length = 3;
+# asignar array a <- $t0
+   $a_length = 0;
+   $t1 = 0;
+L0:
+   if ($t1 < $$t0_length) goto L1;
+   goto L2;
+L1:
+   $t2 = $t0[$t1];
+L4:
+   a[$a_length] = $t2;
+   $a_length = $a_length + 1;
+L5:
+   $t1 = $t1 + 1;
+   goto L0;
+L2:
+   $t4 = 0;
+L6:
+   if ($t4 < $a_length) goto L7;
+   goto L8;
+L7:
+   $t5 = a[$t4];
+   writec $t5;
+   $t4 = $t4 + 1;
+   goto L6;
+L8:
+   writec 10;

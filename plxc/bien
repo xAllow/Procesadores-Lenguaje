@@ -1,0 +1,202 @@
+import java_cup.runtime.*;
+
+action code{:
+   
+    int numEt = 0;
+    int numVar = 0;
+    String et1 = "";
+    String et2 = "";
+    TablaSimbolos t = new TablaSimbolos();
+    String newEtiq(){
+        String v = new String("L"+Integer.toString(numEt));
+        numEt++;
+        return v;
+    }
+
+    String newTemp(){
+        String v = new String("t"+Integer.toString(numVar));
+        numVar++;
+        return v;
+    }
+    public class ParEt {
+        public String sv, sf;
+        public ParEt(String v, String f){
+            sv = v;
+            sf = f;
+        }
+    }
+:};
+
+terminal AP, CP, AC, CC,EQLN, EX,AND, MAS, MENOS, POR, O , PYC, DIV, IGUAL, DIFERENTE,MENOR,MAYOR, COMA;
+terminal String IF, ELSE, WHILE, DO,  FOR, PRINT, INT, FLOAT, UNICODE, ASCII,CHAR;
+terminal Integer ENTERO;
+terminal MENOSUNARIO;
+terminal String IDENT, REAL;
+
+non terminal lista_de_sent;
+non terminal sentencia;
+non terminal String expresion;
+non terminal ParEt condicion;
+non terminal etqF;
+non terminal else_if;
+non terminal etqW;
+non terminal asignacion;
+non terminal Tipo tipo;
+precedence left EQLN;
+precedence left COMA;
+precedence left IF, ELSE, DO, WHILE, FOR, PRINT;
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+precedence left MENOR,MAYOR,DIFERENTE;
+precedence left O, AND;
+precedence left IDENT, ENTERO;
+precedence left MENOSUNARIO;
+
+lista_de_sent ::= sentencia lista_de_sent
+                | sentencia
+                ;
+
+sentencia ::= expresion PYC
+        | IF etqF:f AP condicion:c              {:PLXC.out.println(c.sv + ":");:}    
+
+        CP sentencia                            {:PLXC.out.println("goto " + f + ";");
+                                                  PLXC.out.println(c.sf + ":");:}  
+        else_if                                 {:PLXC.out.println(f + ":");:}  
+
+        | WHILE etqW:w                          {:PLXC.out.println(w+":");:}
+        AP condicion:c                          {:PLXC.out.println(c.sv+":");:}
+        CP sentencia                            {:PLXC.out.println("goto "+ w+";");
+                                                  PLXC.out.println(c.sf + ":");:} 
+        
+        | DO etqW:w                             {:PLXC.out.println(w+":");:}
+        sentencia                              
+        WHILE AP condicion:c CP PYC             {:PLXC.out.println(c.sv+":");
+                                                  PLXC.out.println("goto "+w+";");
+                                                  PLXC.out.println(c.sf+":");:}
+                    
+        | FOR etqF:f1
+        AP expresion PYC                        {:PLXC.out.println(f1+":");:}
+        etqF:f2 condicion:c PYC                  {:PLXC.out.println(f2+":");:}
+        expresion CP                                  {:PLXC.out.println("goto "+f1+";");
+                                                  PLXC.out.println(c.sv+":");:}
+        sentencia                               {:PLXC.out.println("goto "+f2+";");
+                                                  PLXC.out.println(c.sf+":");:}
+        | FOR etqF:f1
+        AP PYC                        {:PLXC.out.println(f1+":");:}
+        etqF:f2 condicion:c PYC                  {:PLXC.out.println(f2+":");:}
+        expresion CP                                  {:PLXC.out.println("goto "+f1+";");
+                                                  PLXC.out.println(c.sv+":");:}
+        sentencia                               {:PLXC.out.println("goto "+f2+";");
+                                                  PLXC.out.println(c.sf+":");:}
+
+
+        | PRINT AP expresion:e1 CP PYC          {:PLXC.out.println("print " + e1 + ";");:}
+
+        | AC  lista_de_sent CC                
+        ;
+
+etqF    ::= {:RESULT = newEtiq();:}
+        ;
+
+etqW    ::= {:RESULT = newEtiq();:};
+
+else_if ::= ELSE sentencia
+            | 
+            ;
+tipo ::= INT:i {:TInt tipo = TInt.getInstancia();
+                 RESULT = tipo;:}
+        | CHAR:c {:TChar tipo = TChar.getInstancia();
+                 RESULT = tipo;:}
+        | FLOAT:f {:TFloat tipo = TFloat.getInstancia();
+                 RESULT = tipo;:};
+expresion ::= expresion:e1 MAS expresion:e2     {:String vdest = newTemp();
+                                                PLXC.out.println(vdest + " = " + e1 + " + " + e2 + ";");
+                                                RESULT = vdest;:}
+        | expresion:e1 MENOS expresion:e2       {:String vdest = newTemp();
+                                                PLXC.out.println(vdest + " = " + e1 + " - " + e2 + ";");
+                                                RESULT = vdest;:}
+
+        | expresion:e1 POR expresion:e2         {:String vdest = newTemp();
+                                                PLXC.out.println(vdest + " = " + e1 + " * " + e2 + ";");
+                                                RESULT = vdest;:}
+
+        | expresion:e1 DIV expresion:e2         {:String vdest = newTemp();
+                                                PLXC.out.println(vdest + " = " + e1 + " / " + e2 + ";");
+                                                RESULT = vdest;:}
+        
+        | IDENT:i                               {:RESULT = i;:}
+        | tipo:tip IDENT:i                        {:if(!t.contiene(i)){
+                                                    Instancia ins = new Instancia(i,tip,t.bActual, true);
+                                                    t.addObj(ins);
+                                                    }
+                                                :}
+        asignacion 
+
+        | ENTERO:n                              {:RESULT = n.toString();:}
+        | expresion COMA expresion
+        | IDENT:i EQLN expresion:e              {:PLXC.out.println(i + " = " + e + ";");
+                                                RESULT = e;:}
+        | ASCII:i                               {:RESULT = Integer.toString((int) i.charAt(0));:}
+        | UNICODE:u                             {:RESULT = u;:}
+        | REAL:r                                {:RESULT= r;:}
+        | AP expresion:e CP                     {:RESULT = e;:}
+        | MENOS expresion:e                     {:String vdest = newTemp();
+                                                PLXC.out.println(vdest + "= 0 - " + e+";");
+                                                RESULT = vdest;:} %prec MENOSUNARIO
+        |
+        ;
+
+asignacion ::= expresion COMA
+        | 
+        ;
+
+condicion ::= expresion:e1 IGUAL expresion:e2   {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e1 + " == " + e2 + ") " + "goto " +  v1 +";");
+                                                PLXC.out.println("goto " + v2 + ";");
+                                                RESULT = new ParEt(v1,v2);:}
+
+        | expresion:e1 DIFERENTE expresion:e2     {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e1 + " == " + e2 + ") " + "goto " +  v2 +";");
+                                                PLXC.out.println("goto " + v1 + ";");
+                                                RESULT = new ParEt(v1,v2);:} 
+
+        | expresion:e1 MENOR EQLN expresion:e2  {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e2 + " < " + e1 + ") " + "goto " +  v2 +";");
+                                                PLXC.out.println("goto " + v1 + ";");
+                                                RESULT = new ParEt(v1,v2);:}   
+
+
+        | expresion:e1 MENOR  expresion:e2  {:  String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e1 + " < " + e2 + ") " + "goto " +  v1 +";");
+                                                PLXC.out.println("goto " + v2 + ";");
+                                                RESULT = new ParEt(v1,v2);:}     
+
+        | expresion:e1 MAYOR EQLN expresion:e2  {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e1 + " < " + e2 + ") " + "goto " +  v2 +";");
+                                                PLXC.out.println("goto " + v1 + ";");
+                                                RESULT = new ParEt(v1,v2);:}
+        | expresion:e1 MAYOR  expresion:e2  {:  String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e2 + " < " + e1 + ") " + "goto " +  v1 +";");
+                                                PLXC.out.println("goto " + v2 + ";");
+                                                RESULT = new ParEt(v1,v2);:}    
+            
+        | condicion:c1 AND                      {:PLXC.out.println(c1.sv + ":");:} 
+        
+        condicion:c2                            {:PLXC.out.println(c1.sf + ":");
+                                                  PLXC.out.println("goto "+c2.sf+";");
+                                                  RESULT = c2;:}
+        | condicion:c1 O                       {:PLXC.out.println(c1.sf + ":");:} 
+        
+        condicion:c2                            {:PLXC.out.println(c1.sv + ":");
+                                                  PLXC.out.println("goto "+c2.sv+";");
+                                                  RESULT = c2;:}
+        | AP condicion CP                                     
+
+        |EX condicion:e                         {:RESULT = new ParEt(e.sf,e.sv);:}                                         
+        ;
