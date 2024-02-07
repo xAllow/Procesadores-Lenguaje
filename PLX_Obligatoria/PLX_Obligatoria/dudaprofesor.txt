@@ -1,0 +1,23 @@
+Cuando realizamos bloques dentro de otros, por ejemplo como en esta entrada:
+
+int x;
+int y;
+int z;
+{
+ x=1;
+ {
+ y = 2;
+ {
+ x = 4;
+ }
+ z = 3;
+ }
+print (x);
+print (y);
+print (z);
+
+El codigo intermedio generado asigna las variables de bloques x$1, y$2 etc segun el bloque donde se estan inizializando,
+pero realmente estamos diciendo por ejemplo con z$3 que se trata de una variable de bloque 3 cuando realmente ha sido
+instanciada en el primer bloque.
+
+Preguntar tambien por que la version precompilador plxc no funciona

@@ -1,0 +1,676 @@
+import java_cup.runtime.*;
+import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
+
+action code {:
+
+    /*private int var = 0;
+    private int etq = 0;
+
+    private String crearVariable() {
+        return "$v" + (var++);
+    }
+
+    private String crearEtiq () {
+        return "E" + (etq++);
+    }*/
+
+    TablaS tabla = new TablaS();
+
+    private String tipoTemporaneo = "-1";
+
+    // Referencias
+    public void variable (String variable, String valor) {
+         PLXC.out.println("\t" + variable + " = " + valor + ";");
+    }
+
+    // Declaracion variables
+    public void declaracionEstandar (String type, String name) {
+        switch (type) {
+            case "int":
+                if (tabla.contiene(name,TablaS.bloqueActual)) printerror("variable ya declarada");
+                Objeto oint = new Instancia(name,TInt.getInstancia(),TablaS.bloqueActual,true);     
+                tabla.addObj(oint);
+                break;
+            case "float":
+                if (tabla.contiene(name,TablaS.bloqueActual)) printerror("variable ya declarada");
+                Objeto ofloat = new Instancia(name,TFloat.getInstancia(),TablaS.bloqueActual,true);     
+                tabla.addObj(ofloat);
+                break;
+            case "char":
+                if (tabla.contiene(name,TablaS.bloqueActual)) printerror("variable ya declarada");
+                Objeto ochar = new Instancia(name,TChar.getInstancia(),TablaS.bloqueActual,true);    
+                tabla.addObj(ochar);
+                break;
+            case "string":
+                // realmente seria declaracionArray, pero para evitar incluir una nueva regla de la gramatica...
+                if (tabla.contiene(name,TablaS.bloqueActual)) printerror("variable ya declarada");
+                Objeto ostring = new Instancia(name,TArray.getInstancia(),TChar.getInstancia(),"0",TablaS.bloqueActual,true);
+                tabla.addObj(ostring);
+                break;
+            default:
+                break;
+        }
+        
+    }
+
+    public void declaracionConValor (String type, String name, Objeto value) {
+        switch (type) {
+            case "int":
+                if (tabla.contiene(name,TablaS.bloqueActual)) printerror("variable ya declarada");
+                Objeto oint = new Instancia(name,TInt.getInstancia(),TablaS.bloqueActual,true);
+                Vector<Objeto> pint = new Vector<>();
+                pint.add(value);
+                oint.metodos("asigna",pint); // ya se que devuelve un objeto pero no se a que asignarlo
+                tabla.addObj(oint);
+                break;
+            case "float":
+                if (tabla.contiene(name,TablaS.bloqueActual)) printerror("variable ya declarada");
+                Objeto ofloat = new Instancia(name,TFloat.getInstancia(),TablaS.bloqueActual,true);
+                Vector<Objeto> pfloat = new Vector<>();
+                pfloat.add(value);
+                ofloat.metodos("asigna",pfloat); // ya se que devuelve un objeto pero no se a que asignarlo
+                tabla.addObj(ofloat);
+                break;
+            case "char":
+                if (tabla.contiene(name,TablaS.bloqueActual)) printerror("variable ya declarada");
+                Objeto ochar = new Instancia(name,TChar.getInstancia(),TablaS.bloqueActual,true);
+                Vector<Objeto> pchar = new Vector<>();
+                pchar.add(value);
+                ochar.metodos("asigna",pchar); // ya se que devuelve un objeto pero no se a que asignarlo
+                tabla.addObj(ochar);
+                break;
+            case "string":
+                if (tabla.contiene(name,TablaS.bloqueActual)) printerror("variable ya declarada");
+                Objeto ostring = new Instancia(name,TArray.getInstancia(),TChar.getInstancia(),"0",TablaS.bloqueActual,true,true,null); // el penultimo parametro es Instancia.getEsString() y el ultimo es Instancia.getVariableIndex()
+                //PLXC.out.println(ostring.toString());
+                Vector<Objeto> pstring = new Vector<>();
+                pstring.add(value);
+                ostring.metodos("asigna",pstring); // ya se que devuelve un objeto pero no se a que asignarlo
+                tabla.addObj(ostring);
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void declaracionArray (String type, String name, String size) {
+
+        // int x[10];
+        // float y[5];
+
+        if (tabla.contiene(name,TablaS.bloqueActual)) printerror("variable ya declarada");
+
+        switch (type) {
+            case "int":
+                // el constructor recibe 2 tipos porque es array y de un subtipo concreto...
+                Objeto oArray = new Instancia(name,TArray.getInstancia(),TInt.getInstancia(),size,TablaS.bloqueActual,true);
+                Objeto tamArray = new Instancia("$" + name + "_" + TablaS.bloqueActual + "_length",TInt.getInstancia(),TablaS.bloqueActual,false);
+                PLXC.out.println("\t" + tamArray.getNombre() + " = " + size + ";");
+                tabla.addObj(oArray);
+                tabla.addObj(tamArray);
+                break;
+            case "float":
+                // el constructor recibe 2 tipos porque es array y de un subtipo concreto...
+                Objeto oArray2 = new Instancia(name,TArray.getInstancia(),TFloat.getInstancia(),size,TablaS.bloqueActual,true);
+                Objeto tamArray2 = new Instancia("$" + name + "_" + TablaS.bloqueActual + "_length",TInt.getInstancia(),TablaS.bloqueActual,false);
+                PLXC.out.println("\t" + tamArray2.getNombre() + " = " + size + ";");
+                tabla.addObj(oArray2);
+                tabla.addObj(tamArray2);
+                break;
+            case "char":
+                // el constructor recibe 2 tipos porque es array y de un subtipo concreto...
+                Objeto oArray3 = new Instancia(name,TArray.getInstancia(),TChar.getInstancia(),size,TablaS.bloqueActual,true);
+                Objeto tamArray3 = new Instancia("$" + name + "_" + TablaS.bloqueActual + "_length",TInt.getInstancia(),TablaS.bloqueActual,false);
+                PLXC.out.println("\t" + tamArray3.getNombre() + " = " + size + ";");
+                tabla.addObj(oArray3);
+                tabla.addObj(tamArray3);
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void declaracionArrayConValor (String type, String n, String size, List<Objeto> sF) {
+
+        // char st[3] = {'X',,'Y','Z'};
+
+        declaracionArray(type,n,size);
+        String auxiliar = Objeto.newNomObj();
+        for (int i = 0; i < sF.size(); i++) {
+            PLXC.out.println("\t" + auxiliar + "[" + i + "]=" + sF.get(i).getNombreBloque() + ";");
+        }
+        Objeto nuevoO = tabla.objeto(n);
+        if (!(nuevoO instanceof Instancia)) printerror("variable no es una instancia");
+
+        Objeto segundo = null;
+        if (((Instancia) nuevoO).getSubtipo() == TInt.getInstancia()) {
+            segundo = new Instancia(auxiliar,TArray.getInstancia(),TInt.getInstancia(),String.valueOf(sF.size()),TablaS.bloqueActual,true);
+        } else if (((Instancia) nuevoO).getSubtipo() == TFloat.getInstancia()) {
+            segundo = new Instancia(auxiliar,TArray.getInstancia(),TFloat.getInstancia(),String.valueOf(sF.size()),TablaS.bloqueActual,true);  
+        } else if (((Instancia) nuevoO).getSubtipo() == TChar.getInstancia()) {
+            segundo = new Instancia(auxiliar,TArray.getInstancia(),TChar.getInstancia(),String.valueOf(sF.size()),TablaS.bloqueActual,true);
+        }
+        Vector<Objeto> p = new Vector<>();
+        p.add(segundo);
+
+        nuevoO.metodos("asigna",p);
+    }
+
+
+    class ParEtiqueta {
+        public String saltoTrue, saltoFalse;
+
+        public ParEtiqueta (String t, String f) {
+            saltoTrue = t;
+            saltoFalse = f;
+        }
+    }
+
+    public void printerror (String message) {
+        PLXC.out.println("\terror ;");
+        PLXC.out.println("\t# " + message);
+    }
+
+    public String obtenerValorASCII (String texto) {
+        int valorASCII;
+
+        if (texto.startsWith("'\\u") && texto.endsWith("'")) {
+            // Si tiene formato unicode hexadecimal
+            String codigoUnicodeHex = texto.substring(3, texto.length() - 1);
+            valorASCII = Integer.parseInt(codigoUnicodeHex, 16); // Convertir a decimal
+        } else if (texto.startsWith("'\\") && texto.endsWith("'") && texto.length() == 4) {
+            // Si es un caracter especial
+            valorASCII = texto.charAt(2); // Obtener el valor ASCII del caracter en la posición 2
+        } else if (texto.startsWith("'") && texto.endsWith("'") && texto.length() == 3) {
+            // Si es un simple caracter
+            valorASCII = texto.charAt(1);
+        } else {
+            // Si el formato del CHARTEXT es erroneo
+            throw new IllegalArgumentException("Formato no válido");
+        }
+
+        return String.valueOf(valorASCII);
+    }
+
+    public boolean esNumeroEntero (String cadena) {
+        try {
+            Integer.parseInt(cadena);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    public String procesarSecuenciasDeEscape(String input) {
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        while (i < input.length()) {
+            char currentChar = input.charAt(i);
+            if (currentChar == '\\' && i + 1 < input.length()) {
+                char nextChar = input.charAt(i + 1);
+                switch (nextChar) {
+                    case 'n':
+                        sb.append('\n');
+                        break;
+                    case 't':
+                        sb.append('\t');
+                        break;
+                    case 'b':
+                        sb.append('\b');
+                        break;
+                    case 'r':
+                        sb.append('\r');
+                        break;
+                    case 'f':
+                        sb.append('\f');
+                        break;
+                    case '\\':
+                        sb.append('\\');
+                        break;
+                    case '\'':
+                        sb.append('\'');
+                        break;
+                    case '\"':
+                        sb.append('\"');
+                        break;
+                    case 'u':
+                        if (i + 5 < input.length()) {
+                            String unicode = input.substring(i + 2, i + 6);
+                            try {
+                                char parsedUnicode = (char) Integer.parseInt(unicode, 16);
+                                sb.append(parsedUnicode);
+                                i += 4; // Mover el índice 4 lugares adicionales
+                            } catch (NumberFormatException e) {
+                                sb.append("\\u").append(unicode); // Si hay un error, mantener la secuencia
+                            }
+                        } else {
+                            sb.append("\\u"); // Si no hay suficientes caracteres, mantener la secuencia
+                        }
+                        break;
+                    default:
+                        sb.append("\\").append(nextChar); // Mantener la secuencia desconocida
+                        break;
+                }
+                i++; // Incrementar el índice adicionalmente
+            } else {
+                sb.append(currentChar);
+            }
+            i++;
+        }
+        return sb.toString();
+    }
+:}
+
+terminal IF,ELSE,DO,WHILE,FOR,PRINT;
+terminal AP,CP,AC,CC,ALL,CLL;
+terminal EQ,NE,LE,LT,GE,GT,AND,OR,NO;
+terminal MAS,MENOS,POR,DIV,IGUAL,MENOSUNARIO;
+terminal PYC,COMA;
+terminal String NUM,IDENT,REAL,STRINGTEXT,CHARTEXT;
+terminal CASTINGINT,CASTINGFLOAT,CASTINGCHAR,LENGTH;
+terminal PRECEDENCIASTRING;
+
+non terminal lista_de_sent,sentencia,else_if;
+non terminal Objeto expresion;
+non terminal ParEtiqueta condicion;
+non terminal String etiquetaFinal;
+non terminal Integer iBloque;
+non terminal declaracionVars,restoVars;
+non terminal List<Objeto> secuenciaExpresiones;
+
+precedence  left        IF, ELSE, DO, WHILE, FOR, PRINT;  
+precedence  left        MAS, MENOS;
+precedence  left        POR, DIV;
+precedence  left        EQ, LE, GE;
+precedence  left        NE, LT, GT;
+precedence  left        NO, AND, OR;
+precedence  left        IDENT, NUM, STRINGTEXT;
+precedence  left        CASTINGINT, CASTINGFLOAT;
+precedence  left        COMA;
+precedence  left        MENOSUNARIO;
+precedence  left        PRECEDENCIASTRING;
+
+lista_de_sent ::= sentencia
+                | lista_de_sent sentencia
+                ;
+
+sentencia ::= expresion PYC
+            | PRINT AP expresion:e CP PYC            
+                {:
+                    if (!(e instanceof Instancia)) printerror("variable no es una instancia");
+                    if (((Instancia) e).getTipo() == TChar.getInstancia()) {
+                        PLXC.out.println("\tprintc " + e.getNombreBloque() + ";");
+                    } else if (((Instancia) e).getTipo() == TArray.getInstancia() && ((Instancia) e).getEsString()) {
+                        String lengthVariable = "$" + e.getNombreBloque() + "_length";
+                        Objeto index4 = new Instancia(Objeto.newNomObj(), TInt.getInstancia(), TablaS.bloqueActual, true);
+                        PLXC.out.println("\t" + index4.getNombreBloque() + "=0;");
+                        String l6 = TablaS.newEtiq(), l7 = TablaS.newEtiq(), l8 = TablaS.newEtiq();
+                        PLXC.out.println(l6 + ":");
+                        PLXC.out.println("\tif (" + index4.getNombreBloque() + "<" + lengthVariable + ") goto " + l7 + ";");
+                        PLXC.out.println("\tgoto " + l8 + ";");
+
+                        PLXC.out.println(l7 + ":");
+                        String auxAsig = Objeto.newNomObj();
+                        PLXC.out.println("\t" + auxAsig + "=" + e.getNombreBloque() + "[" + index4.getNombreBloque() + "];");
+                        PLXC.out.println("\twritec " + auxAsig + ";");
+                        
+                        PLXC.out.println("\t" + index4.getNombreBloque() + "=" + index4.getNombreBloque() + "+1;");
+                        PLXC.out.println("\tgoto " + l6 + ";");
+                        PLXC.out.println(l8 + ":" + "\n\twritec 10;");
+                    } else if (((Instancia) e).getTipo() == TArray.getInstancia()) {
+                        String auxiliar = Objeto.newNomObj();
+                        int tamArray = Integer.parseInt(((Instancia) e).getTamArray());
+                        String subTipo = (((Instancia) e).getSubtipo() == TChar.getInstancia()) ? "char" : "otro";
+                        for (int i = 0; i < tamArray; i++) {
+                            PLXC.out.println("\t" + auxiliar + "=" + e.getNombreBloque() + "[" + i + "];");
+                            PLXC.out.println("\t" + ((subTipo.equals("char")) ? "printc " : "print ") + auxiliar + ";");
+                        }
+                    } else {
+                        PLXC.out.println("\tprint " + e.getNombreBloque() + ";");
+                    }
+                :}
+            | PRINT AP ALL secuenciaExpresiones:sF CLL CP PYC
+                {:
+                    String auxiliar = Objeto.newNomObj();
+                    for (int i = 0; i < sF.size(); i++) {
+                        PLXC.out.println("\t" + auxiliar + "[" + i + "]=" + sF.get(i).getNombreBloque() + ";");
+                    }
+                    String auxiliar2 = Objeto.newNomObj();
+                    for (int i = 0; i < sF.size(); i++) {
+                        PLXC.out.println("\t" + auxiliar2 + "=" + auxiliar + "[" + i + "];");
+                        PLXC.out.println("\tprint " + auxiliar2 + ";");
+                    }
+                :}
+            | ALL iBloque:iB lista_de_sent CLL
+                {:
+                    tabla.borrarBloque(tabla.bloqueActual);
+                    tabla.bloqueActual = iB.intValue();
+                :}
+            | IF etiquetaFinal:eF AP condicion:c
+                {: PLXC.out.println(c.saltoTrue+":"); :}
+            CP sentencia
+                {:
+                    PLXC.out.println("\tgoto " + eF + ";");
+                    PLXC.out.println(c.saltoFalse + ":");
+                :}
+            else_if
+                {: PLXC.out.println(eF + ":"); :}
+            | WHILE etiquetaFinal:eF {: PLXC.out.println(eF + ":"); :}
+            AP condicion:c
+                {: 
+                    PLXC.out.println(c.saltoTrue + ":");
+                :}
+            CP sentencia
+                {:
+                    PLXC.out.println("\tgoto " + eF + ";");
+                    PLXC.out.println(c.saltoFalse + ":");
+                :}
+            | DO etiquetaFinal:eF {: PLXC.out.println(eF + ":"); :}
+            sentencia WHILE AP condicion:c
+                {:
+                    PLXC.out.println(c.saltoTrue + ":");
+                    PLXC.out.println("\tgoto " + eF + ";");
+                    PLXC.out.println(c.saltoFalse + ":");
+                :}
+            CP PYC
+            | FOR etiquetaFinal:eF1
+            AP expresion
+                {: PLXC.out.println(eF1 + ":"); :}
+            PYC condicion:c etiquetaFinal:eF2
+                {: PLXC.out.println(eF2 + ":"); :}
+            PYC expresion
+                {: 
+                    PLXC.out.println("\tgoto " + eF1 + ";"); 
+                    PLXC.out.println(c.saltoTrue+":");
+                :}
+            CP sentencia
+                {:
+                    PLXC.out.println("\tgoto " + eF2 + ";");
+                    PLXC.out.println(c.saltoFalse+":");
+                :}
+            ;
+
+iBloque ::= {: RESULT = Integer.valueOf(TablaS.newBloque()); :}
+        ;
+
+etiquetaFinal ::= {: RESULT = TablaS.newEtiq(); :}
+                ;
+
+// necesitamos un no terminal auxiliar para que CUP funcione al leer una
+// sentencia if que puede o no tener else
+
+else_if ::= ELSE sentencia
+        |
+        ;
+
+expresion ::= expresion:e1 MAS expresion:e2          
+                {:
+                    Vector<Objeto> p = new Vector<>();
+                    p.add(e2);
+                    RESULT = e1.metodos("suma",p);
+                :}
+            | expresion:e1 MENOS expresion:e2          
+                {:
+                    Vector<Objeto> p = new Vector<>();
+                    p.add(e2);
+                    RESULT = e1.metodos("resta",p);
+                :}
+            | expresion:e1 POR expresion:e2        
+                {:
+                    Vector<Objeto> p = new Vector<>();
+                    p.add(e2);
+                    RESULT = e1.metodos("multiplicacion",p);
+                :}
+            | expresion:e1 DIV expresion:e2
+                {:
+                    Vector<Objeto> p = new Vector<>();
+                    p.add(e2);
+                    RESULT = e1.metodos("division",p);
+                :}
+            | MENOS expresion:e                         
+                {:
+                    Vector<Objeto> p = new Vector<>();
+                    p.add(e);
+                    Objeto auxiliar = new Instancia("0",TInt.getInstancia(),TablaS.bloqueActual,false);
+                    RESULT = auxiliar.metodos("resta",p);
+                :} %prec MENOSUNARIO
+            | AP expresion:e CP                         {: RESULT = e; :}
+            | IDENT:i IGUAL expresion:e              
+                {:
+                    if (!tabla.contiene(i)) printerror("variable no declarada");
+                    Objeto o = tabla.objeto(i);
+                    if (!(o instanceof Instancia)) printerror("variable no es una instancia");
+                    Vector<Objeto> p = new Vector<>();
+                    p.add(e);
+                    RESULT = o.metodos("asigna",p);
+                :}
+            | IDENT:name IGUAL ALL secuenciaExpresiones:sF CLL
+                {:
+                    if (!tabla.contiene(name)) printerror("variable no declarada");
+                    String auxiliar = Objeto.newNomObj();
+                    for (int i = 0; i < sF.size(); i++) {
+                        PLXC.out.println("\t" + auxiliar + "[" + i + "]=" + sF.get(i).getNombreBloque() + ";");
+                    }
+                    Objeto nuevoO = tabla.objeto(name);
+                    if (!(nuevoO instanceof Instancia)) printerror("variable no es una instancia");
+                    
+                    Objeto segundo = null;
+                    if (((Instancia) nuevoO).getSubtipo() == TInt.getInstancia()) {
+                        segundo = new Instancia(auxiliar,TArray.getInstancia(),TInt.getInstancia(),String.valueOf(sF.size()),TablaS.bloqueActual,true);
+                    } else if (((Instancia) nuevoO).getSubtipo() == TFloat.getInstancia()) {
+                        segundo = new Instancia(auxiliar,TArray.getInstancia(),TFloat.getInstancia(),String.valueOf(sF.size()),TablaS.bloqueActual,true);  
+                    } else if (((Instancia) nuevoO).getSubtipo() == TChar.getInstancia()) {
+                        segundo = new Instancia(auxiliar,TArray.getInstancia(),TChar.getInstancia(),String.valueOf(sF.size()),TablaS.bloqueActual,true);
+                    }
+                    Vector<Objeto> p = new Vector<>();
+                    p.add(segundo);
+
+                    RESULT = nuevoO.metodos("asigna",p);
+                :}
+            | IDENT:i                                   
+                {:
+                    if (!tabla.contiene(i)) printerror("variable no declarada");
+                    Objeto o = tabla.objeto(i);
+                    if (!(o instanceof Instancia)) printerror("variable no es una instancia");
+                    RESULT = o;
+                :}
+            | NUM:n
+                {: RESULT = new Instancia(n,TInt.getInstancia(),TablaS.bloqueActual,false); :}
+            | REAL:r
+                {: RESULT = new Instancia(r,TFloat.getInstancia(),TablaS.bloqueActual,false); :}
+            | CHARTEXT:cT
+                {: RESULT = new Instancia(obtenerValorASCII(cT),TChar.getInstancia(),TablaS.bloqueActual,false); :}
+            | STRINGTEXT:sT
+                {:
+                    String cadenaAux = sT.substring(1,sT.length()-1);
+                    String cadena = procesarSecuenciasDeEscape(cadenaAux);
+                    String aux = Objeto.newNomObj();
+                    for (int i = 0; i < cadena.length(); i++) {
+                        char caracter = cadena.charAt(i);
+                        int valorAscii = (int) caracter;
+                        PLXC.out.println("\t" + aux + "[" + i + "]=" + valorAscii + ";");
+                    }
+                    Objeto length = new Instancia("$" + aux + "_length", TInt.getInstancia(), TablaS.bloqueActual, false);
+                    PLXC.out.println("\t" + length.getNombre() + "=" + cadena.length() + ";");
+                
+                    Objeto index = new Instancia(Objeto.newNomObj(), TInt.getInstancia(), TablaS.bloqueActual, true);
+                    PLXC.out.println("\t" + index.getNombreBloque() + "=0;");
+                    RESULT = new Instancia(aux,TArray.getInstancia(),TChar.getInstancia(),String.valueOf(sT.length() - 2),TablaS.bloqueActual,false,true,index);
+                :}
+            | CASTINGINT expresion:e
+                {:
+                    Vector<Objeto> p = new Vector<>();
+                    p.add(e);
+                    RESULT = e.metodos("castingAInt",p);
+                :}
+            | CASTINGFLOAT expresion:e
+                {: 
+                    Vector<Objeto> p = new Vector<>();
+                    p.add(e);
+                    RESULT = e.metodos("castingAFloat",p);
+                :}
+            | CASTINGCHAR expresion:e
+                {:
+                    Vector<Objeto> p = new Vector<>();
+                    p.add(e);
+                    RESULT = e.metodos("castingAChar",p);
+                :}
+            | IDENT:name AC expresion:index CC
+                {:
+                    if (!tabla.contiene(name)) printerror("variable (array) no declarada");
+                    Objeto found = tabla.objeto(name);
+                    Vector<Objeto> vAux = new Vector<>();
+                    vAux.add(index);
+
+                    Objeto salida = found.metodos("accederA",vAux);
+                    tabla.addObj(salida);
+                    RESULT = salida;
+                :}
+            | IDENT:name AC expresion:index CC IGUAL expresion:value
+                {:
+                    if (!tabla.contiene(name)) printerror("variable no declarada");
+                    Objeto o = tabla.objeto(name);
+                    if (!(o instanceof Instancia)) printerror("variable no es una instancia");
+                    
+                    Vector<Objeto> vAux = new Vector<>();
+                    vAux.add(value);
+                    vAux.add(index);
+
+                    Objeto salida = o.metodos("asignaValorPos",vAux);
+                    tabla.addObj(salida);
+                :}
+            | IDENT:name LENGTH
+                {:
+                    if (!tabla.contiene(name)) printerror("variable no declarada");
+                    Objeto objAr = tabla.objeto(name); 
+                    if (!(objAr instanceof Instancia)) printerror("variable no es una instancia");
+                    RESULT = tabla.objeto("$" + name + "_" + objAr.getBloque() + "_length");
+                :}
+            | declaracionVars
+            |
+            ;
+
+declaracionVars ::= IDENT:type IDENT:n
+                        {:
+                            declaracionEstandar(type,n);
+                        :}
+                    | IDENT:type IDENT:n COMA 
+                        {:
+                            tipoTemporaneo = type;
+                            declaracionEstandar(type,n);
+                        :} restoVars
+                        
+                    | IDENT:type IDENT:n IGUAL expresion:e
+                        {:
+                            declaracionConValor(type,n,e);
+                        :}
+                    | IDENT:type IDENT:n IGUAL expresion:e COMA
+                        {:
+                            tipoTemporaneo = type;
+                            declaracionConValor(type,n,e);
+                        :} restoVars
+                    | IDENT:type IDENT:n AC NUM:size CC
+                        {:
+                            declaracionArray(type,n,size);
+                        :}
+                    | IDENT:type IDENT:n AC NUM:size CC IGUAL ALL secuenciaExpresiones:sF CLL
+                        {:
+                            declaracionArrayConValor(type,n,size,sF);
+                        :}
+                    ;
+
+restoVars ::= IDENT:n
+                {:
+                    declaracionEstandar(tipoTemporaneo,n);
+                :}
+            | IDENT:n IGUAL expresion:e
+                {:
+                    declaracionConValor(tipoTemporaneo,n,e);
+                :}
+            | IDENT:n COMA restoVars
+                {:
+                    declaracionEstandar(tipoTemporaneo,n);
+                :}
+            | IDENT:n IGUAL expresion:e COMA restoVars
+                {:
+                    declaracionConValor(tipoTemporaneo,n,e);
+                :}
+            ;
+
+
+// al final del analisis de secuenciaExpresiones tendre una lista de Strings con todos los numero float
+// encerrados entre { }.
+
+secuenciaExpresiones ::= expresion:r {: RESULT = new ArrayList<>(); RESULT.add(r); :}
+                |   expresion:r {: RESULT = new ArrayList<>(); RESULT.add(r); :} COMA secuenciaExpresiones:sF {: RESULT.addAll(sF); :}
+                ;
+
+condicion ::= expresion:e1 EQ expresion:e2
+                {:
+                    // SEGURAMENTE TENGO QUE HACER AJUSTES DE GETNOMBREBLOQUE() PARA CUANDO MUESTRE LOS $
+                    ParEtiqueta pet = new ParEtiqueta(TablaS.newEtiq(),TablaS.newEtiq());
+                    PLXC.out.println("\tif (" + e1.getNombreBloque() + "==" + e2.getNombreBloque() + ") goto " + pet.saltoTrue + ";");
+                    PLXC.out.println("\tgoto " + pet.saltoFalse + ";");
+                    RESULT = pet;
+                :}
+            | expresion:e1 NE expresion:e2
+                {: 
+                    ParEtiqueta pet = new ParEtiqueta(TablaS.newEtiq(),TablaS.newEtiq());
+                    PLXC.out.println("\tif (" + e1.getNombreBloque() + "==" + e2.getNombreBloque() + ") goto " + pet.saltoFalse + ";");
+                    PLXC.out.println("\tgoto " + pet.saltoTrue + ";");
+                    RESULT = pet;
+                :}
+            | expresion:e1 LT expresion:e2
+                {: 
+                    ParEtiqueta pet = new ParEtiqueta(TablaS.newEtiq(),TablaS.newEtiq());
+                    PLXC.out.println("\tif (" + e1.getNombreBloque() + "<" + e2.getNombreBloque() + ") goto " + pet.saltoTrue + ";");
+                    PLXC.out.println("\tgoto " + pet.saltoFalse + ";");
+                    RESULT = pet;
+                :}
+            | expresion:e1 LE expresion:e2
+                {:
+                    ParEtiqueta pet = new ParEtiqueta(TablaS.newEtiq(),TablaS.newEtiq());
+                    PLXC.out.println("\tif (" + e2.getNombreBloque() + "<" + e1.getNombreBloque() + ") goto " + pet.saltoFalse + ";");
+                    PLXC.out.println("\tgoto " + pet.saltoTrue + ";");
+                    RESULT = pet;
+                :}
+            | expresion:e1 GT expresion:e2
+                {: 
+                    ParEtiqueta pet = new ParEtiqueta(TablaS.newEtiq(),TablaS.newEtiq());
+                    PLXC.out.println("\tif (" + e2.getNombreBloque() + "<" + e1.getNombreBloque() + ") goto " + pet.saltoTrue + ";");
+                    PLXC.out.println("\tgoto " + pet.saltoFalse + ";");
+                    RESULT = pet;
+                :}
+            | expresion:e1 GE expresion:e2
+                {:
+                    ParEtiqueta pet = new ParEtiqueta(TablaS.newEtiq(),TablaS.newEtiq());
+                    PLXC.out.println("\tif (" + e1.getNombreBloque() + "<" + e2.getNombreBloque() + ") goto " + pet.saltoFalse + ";");
+                    PLXC.out.println("\tgoto " + pet.saltoTrue + ";");
+                    RESULT = pet;
+                :}
+            | NO condicion:c
+                {:
+                    RESULT = new ParEtiqueta(c.saltoFalse,c.saltoTrue);
+                    // se intercambian
+                :}
+            | condicion:c1 AND {: PLXC.out.println(c1.saltoTrue+":"); :}
+            condicion:c2
+                {:
+                    PLXC.out.println(c1.saltoFalse+":");
+                    PLXC.out.println("\tgoto " + c2.saltoFalse + ";");
+                    RESULT = new ParEtiqueta(c2.saltoTrue,c2.saltoFalse);
+                :}
+            | condicion:c1 OR {: PLXC.out.println(c1.saltoFalse+":"); :}
+            condicion:c2
+                {:
+                    PLXC.out.println(c1.saltoTrue + ":");
+                    PLXC.out.println("\tgoto " + c2.saltoTrue + ";");
+                    RESULT = new ParEtiqueta(c2.saltoTrue,c2.saltoFalse);
+                :}
+            | AP condicion:c CP
+                {:
+                    RESULT = c; // quizas es mejor un .clone()
+                :}
+            ;

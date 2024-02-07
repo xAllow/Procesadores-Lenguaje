@@ -1,0 +1,233 @@
+import java_cup.runtime.*;
+import java.util.*;
+
+action code{:
+    String tipoTemp = "null";
+    int numEt = 0;
+    int numVar = 0;
+    TablaSimbolos t = new TablaSimbolos();
+    String newEtiq(){
+        String v = new String("L"+Integer.toString(numEt));
+        numEt++;
+        return v;
+    }
+    String newTemp(){
+        String v = new String("t"+Integer.toString(numVar));
+        numVar++;
+        return v;
+    }
+    public class ParEt {
+        public String sv, sf;
+        public ParEt(String v, String f){
+            sv = v;
+            sf = f;
+        }
+    }
+
+    public void declararBasico(String tipo, String nombre){
+        switch(tipo) {
+            case "int":
+                if(t.contiene(nombre, t.bActual)){}
+                Objeto o = new Instancia(nombre, TInt.getInstancia(), t.bActual, true);
+                t.addObj(o);
+                break;
+            case "char":
+                if(t.contiene(nombre, t.bActual)){}
+                Objeto o1 = new Instancia(nombre, TChar.getInstancia(), t.bActual, true);
+                t.addObj(o1);
+                break;
+        }
+    }
+
+    public void declararComplejo(String tipo, String nombre, Objeto ob){
+        switch(tipo){
+            case "int":
+                break;
+            case "char":
+                System.out.println("AQUI");
+                if(t.contiene(nombre, t.bActual)){}
+                Objeto o = new Instancia(nombre, TChar.getInstancia(), t.bActual, true);
+                Vector<Objeto> pc = new Vector<>();
+                pc.add(ob);
+                o.metodos("asigna", pc);
+                t.addObj(o);
+                break;
+        }
+    }
+:};
+
+terminal AP, CP, AC, CC,EQLN, EX,AND, MAS, MENOS, POR, O , PYC, DIV, IGUAL, DIFERENTE,MENOR,MAYOR, COMA, REAL, CHAR, FLOAT, CASTINT, CASTCHAR, CASTFLOAT;
+terminal String IF, ELSE, WHILE, DO,  FOR, PRINT, INT;
+terminal Integer ENTERO;
+terminal MENOSUNARIO;
+terminal String IDENT, ASCII, UNICODE;
+
+non terminal lista_de_sent;
+non terminal sentencia;
+non terminal Objeto expresion;
+non terminal ParEt condicion;
+non terminal Integer iBloque;
+non terminal etqF;
+non terminal else_if;
+non terminal etqW;
+non terminal declararVar;
+non terminal masVar;
+
+
+precedence left IF, ELSE, DO, WHILE, FOR, PRINT;
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+precedence left MENOR,MAYOR,DIFERENTE;
+precedence left O, AND;
+
+precedence left IDENT, ENTERO;
+precedence left MENOSUNARIO;
+
+lista_de_sent ::= sentencia lista_de_sent
+                | sentencia
+                ;
+
+sentencia ::= expresion PYC
+        | IF etqF:f AP condicion:c              {:PLXC.out.println(c.sv + ":");:}    
+
+        CP sentencia                            {:PLXC.out.println("goto " + f + ";");
+                                                  PLXC.out.println(c.sf + ":");:}  
+        else_if                                 {:PLXC.out.println(f + ":");:}  
+
+        | WHILE etqW:w                          {:PLXC.out.println(w+":");:}
+        AP condicion:c                          {:PLXC.out.println(c.sv+":");:}
+        CP sentencia                            {:PLXC.out.println("goto "+ w+";");
+                                                  PLXC.out.println(c.sf + ":");:} 
+        
+        | DO etqW:w                             {:PLXC.out.println(w+":");:}
+        sentencia                              
+        WHILE AP condicion:c CP PYC             {:PLXC.out.println(c.sv+":");
+                                                  PLXC.out.println("goto "+w+";");
+                                                  PLXC.out.println(c.sf+":");:}
+                    
+        | FOR etqF:f1
+        AP expresion PYC                        {:PLXC.out.println(f1+":");:}
+        etqF:f2 condicion:c PYC                 {:PLXC.out.println(f2+":");:}
+        expresion CP                            {:PLXC.out.println("goto "+f1+";");
+                                                  PLXC.out.println(c.sv+":");:}
+        sentencia                               {:PLXC.out.println("goto "+f2+";");
+                                                  PLXC.out.println(c.sf+":");:}
+
+        | PRINT AP expresion:e1 CP PYC          {:e1.metodos("imprimir", new Vector<>());:}
+
+        | AC iBloque:b lista_de_sent CC         {:t.borrarBloque(t.bActual);
+                                                  t.bActual=b.intValue();:}         
+        ;
+
+etqF    ::= {:RESULT = newEtiq();:}
+        ;
+
+iBloque ::= {:RESULT = Integer.valueOf(TablaSimbolos.newBloque());:};
+
+etqW    ::= {:RESULT = newEtiq();:};
+
+else_if ::= ELSE sentencia
+            | 
+            ;
+
+expresion ::= expresion:e1 MAS expresion:e2     {:Vector<Objeto> v = new Vector<>();
+                                                  v.add(e2);
+                                                  RESULT = e1.metodos("suma",v);:}
+        | expresion:e1 MENOS expresion:e2       {:Vector<Objeto> v = new Vector<>();
+                                                  v.add(e2);
+                                                  RESULT = e1.metodos("menos",v);:}
+
+        | expresion:e1 POR expresion:e2         {:Vector<Objeto> v = new Vector<>();
+                                                  v.add(e2);
+                                                  RESULT = e1.metodos("por",v);:}
+
+        | expresion:e1 DIV expresion:e2         {:Vector<Objeto> v = new Vector<>();
+                                                  v.add(e2);
+                                                  RESULT = e1.metodos("div",v);:}
+
+        | IDENT:i                               {:if(!t.contiene(i)){}
+                                                  Objeto o = t.objeto(i);
+                                                  if(!(o instanceof Instancia)) {}
+                                                  RESULT = o;:}
+
+        | ENTERO:n                              {:RESULT = new Instancia(n.toString(), TInt.getInstancia(), TablaSimbolos.bActual, false);:}
+        | UNICODE:u                             {:RESULT = new Instancia(u, TChar.getInstancia(), TablaSimbolos.bActual, false);:}
+        | ASCII:c                               {:RESULT = new Instancia(String.valueOf((int)c.charAt(0)), TChar.getInstancia(), TablaSimbolos.bActual, false);:}
+        | CASTCHAR expresion:e                  {:Vector<Objeto> v = new Vector<>();
+                                                  v.add(e);
+                                                  RESULT = e.metodos("castChar",v);:}
+        | IDENT:i EQLN expresion:e              {:if(!t.contiene(i)){}
+                                                 
+                                                  Objeto o = t.objeto(i);
+                                                  if(!(o instanceof Instancia)) {}
+                                                  Vector<Objeto> v = new Vector<>();
+                                                  v.add(e);
+                                                  o.metodos("asigna", v);
+                                                  RESULT = e;:}
+        | AP expresion:e CP                     {:RESULT = e;:}
+        | MENOS expresion:e                     {:Vector<Objeto> v = new Vector<>();
+                                                  v.add(e);
+                                                  Objeto aux = new Instancia("0", TInt.getInstancia(), TablaSimbolos.bActual, false);
+                                                  RESULT = e.metodos("resta",v);:} %prec MENOSUNARIO
+        | declararVar
+        ;
+    
+declararVar ::= IDENT:tipo IDENT:n              {:declararBasico(tipo,n);:}
+            |   IDENT:tipo IDENT:n COMA         {:tipoTemp = tipo;
+                                                  declararBasico(tipo,n);
+                                                :} masVar
+            | IDENT:tipo IDENT:n EQLN expresion:e {:declararComplejo(tipo, n, e);:}                                            
+            ;
+
+masVar ::=  IDENT:i                             {:declararBasico(tipoTemp,i);:}
+            | IDENT:i COMA masVar               {:declararBasico(tipoTemp, i);:}
+            ;
+condicion ::= expresion:e1 IGUAL expresion:e2   {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e1.getNombre() + " == " + e2.getNombre()  + ") " + "goto " +  v1 +";");
+                                                PLXC.out.println("goto " + v2 + ";");
+                                                RESULT = new ParEt(v1,v2);:}
+
+        | expresion:e1 DIFERENTE expresion:e2     {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e1.getNombre()  + " == " + e2.getNombre()  + ") " + "goto " +  v2 +";");
+                                                PLXC.out.println("goto " + v1 + ";");
+                                                RESULT = new ParEt(v1,v2);:} 
+
+        | expresion:e1 MENOR EQLN expresion:e2  {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e2.getNombre()  + " < " + e1.getNombre()  + ") " + "goto " +  v2 +";");
+                                                PLXC.out.println("goto " + v1 + ";");
+                                                RESULT = new ParEt(v1,v2);:}   
+
+
+        | expresion:e1 MENOR  expresion:e2  {:  String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e1.getNombre()  + " < " + e2.getNombre()  + ") " + "goto " +  v1 +";");
+                                                PLXC.out.println("goto " + v2 + ";");
+                                                RESULT = new ParEt(v1,v2);:}     
+
+        | expresion:e1 MAYOR EQLN expresion:e2  {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e1.getNombre()  + " < " + e2.getNombre()  + ") " + "goto " +  v2 +";");
+                                                PLXC.out.println("goto " + v1 + ";");
+                                                RESULT = new ParEt(v1,v2);:}
+        | expresion:e1 MAYOR  expresion:e2  {:  String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                PLXC.out.println("if (" + e2.getNombre()  + " < " + e1.getNombre()  + ") " + "goto " +  v1 +";");
+                                                PLXC.out.println("goto " + v2 + ";");
+                                                RESULT = new ParEt(v1,v2);:}    
+            
+        | condicion:c1 AND                      {:PLXC.out.println(c1.sv + ":");:} 
+        condicion:c2                            {:PLXC.out.println(c1.sf + ":");
+                                                  PLXC.out.println("goto "+c2.sf+";");
+                                                  RESULT = c2;:}
+                                                  
+        | condicion:c1 O                       {:PLXC.out.println(c1.sf + ":");:} 
+        condicion:c2                            {:PLXC.out.println(c1.sv + ":");
+                                                  PLXC.out.println("goto "+c2.sv+";");
+                                                  RESULT = c2;:}
+        | AP condicion CP                                     
+
+        |EX condicion:e                         {:RESULT = new ParEt(e.sf,e.sv);:}                                         
+        ;

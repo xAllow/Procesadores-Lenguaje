@@ -31,6 +31,6 @@ import java_cup.runtime.*;
 "do"                          {return new Symbol(sym.DO, yytext());}
 "for"                         {return new Symbol(sym.FOR, yytext());}
 "print"                       {return new Symbol(sym.PRINT, yytext());}
-[a-zA-Z][a-zA-Z0-9]*          {return new Symbol(sym.IDENT,yytext());}
+	[a-zA-Z][a-zA-Z0-9]*          {return new Symbol(sym.IDENT,yytext());}
 [^]                           {}
 

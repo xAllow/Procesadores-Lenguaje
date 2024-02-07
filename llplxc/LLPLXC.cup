@@ -1,0 +1,202 @@
+import java_cup.runtime.*;
+
+action code{:
+   
+    int numEt = 0;
+    int numVar = 1;
+    
+    String newEtiq(){
+        String v = new String("L"+Integer.toString(numEt));
+        numEt++;
+        return v;
+    }
+
+    String newTemp(){
+        String v = new String("%"+Integer.toString(numVar));
+        numVar++;
+        return v;
+    }
+    public class ParEt {
+        public String sv, sf;
+        public ParEt(String v, String f){
+            sv = v;
+            sf = f;
+        }
+    }
+:};
+
+terminal AP, CP, AC, CC,EQLN, EX,AND, MAS, MENOS,COMA, POR, O , PYC, DIV, IGUAL, DIFERENTE,MENOR,MAYOR;
+terminal String IF, ELSE, WHILE, DO,  FOR, PRINT;
+terminal Integer ENTERO;
+terminal MENOSUNARIO;
+terminal String IDENT;
+
+non terminal lista_de_sent;
+non terminal sentencia;
+non terminal String expresion;
+non terminal ParEt condicion;
+non terminal etqF;
+non terminal else_if;
+non terminal etqW;
+non terminal declararVariables;
+non terminal resto;
+
+
+precedence left IF, ELSE, DO, WHILE, FOR, PRINT;
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+precedence left MENOR,MAYOR,DIFERENTE;
+precedence left O, AND;
+
+precedence left IDENT, ENTERO;
+precedence left COMA;
+precedence left MENOSUNARIO;
+
+lista_de_sent ::= sentencia lista_de_sent 
+                | sentencia 
+                ;
+
+sentencia ::= expresion PYC
+        | IF etqF:f AP condicion:c              {:LLPLXC.out.println(c.sv + ":");:}    
+
+        CP sentencia                            {:LLPLXC.out.println("  br label %"+f);
+                                                  LLPLXC.out.println(c.sf + ":");:}  
+        else_if                                 {:LLPLXC.out.println("  br label %"+f);
+                                                LLPLXC.out.println(f + ":");:}  
+
+        | WHILE etqW:w                          {:LLPLXC.out.println("  br label %"+ w+";");
+                                                LLPLXC.out.println(w+":");:}
+        AP condicion:c                          {:LLPLXC.out.println(c.sv+":");:}
+        CP sentencia                            {:LLPLXC.out.println("  br label %"+ w+";");
+                                                  LLPLXC.out.println(c.sf + ":");:} 
+        
+        | DO etqW:w                             {:LLPLXC.out.println("  br label %"+ w+";");
+                                                LLPLXC.out.println(w+":");:}
+        sentencia                              
+        WHILE AP condicion:c CP PYC             {:LLPLXC.out.println(c.sv+":");
+                                                  LLPLXC.out.println("br label %"+w+";");
+                                                  LLPLXC.out.println(c.sf+":");:}
+                    
+        | FOR etqF:f1
+        AP expresion PYC                        {:LLPLXC.out.println("  br label %"+ f1+";");
+                                                  LLPLXC.out.println(f1+":");:}
+        etqF:f2 condicion:c PYC                  {:LLPLXC.out.println(f2+":");:}
+        expresion CP                                  {:LLPLXC.out.println("br label %"+f1+";");
+                                                  LLPLXC.out.println(c.sv+":");:}
+        sentencia                               {:LLPLXC.out.println("br label %"+f2+";");
+                                                  LLPLXC.out.println(c.sf+":");:}
+
+        | PRINT AP expresion:e1 CP PYC          {:String temp = newTemp();
+                                                 LLPLXC.out.println("  "+temp+" = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i32 "+e1+")");
+                                                :}
+
+        | AC  lista_de_sent CC             
+        ;
+
+etqF    ::= {:RESULT = newEtiq();:}
+        ;
+
+etqW    ::= {:RESULT = newEtiq();:};
+
+else_if ::= ELSE sentencia
+            | 
+            ;
+
+expresion ::= expresion:e1 MAS expresion:e2     {:String vdest = newTemp();
+                                                LLPLXC.out.println("  "+vdest + " = add i32 "+e1+" , "+e2);
+                                                RESULT = vdest;:}
+        | expresion:e1 MENOS expresion:e2       {:String vdest = newTemp();
+                                                LLPLXC.out.println("  "+vdest + " = sub i32 "+e1+" , "+e2);
+                                                RESULT = vdest;:}
+
+        | expresion:e1 POR expresion:e2         {:String vdest = newTemp();
+                                                LLPLXC.out.println("  "+vdest + " = mul i32 "+e1+" , "+e2);
+                                                RESULT = vdest;:}
+
+        | expresion:e1 DIV expresion:e2         {:String vdest = newTemp();
+                                                LLPLXC.out.println("  "+vdest + " = sdiv i32 "+e1+" , "+e2);
+                                                RESULT = vdest;:}
+    
+        | IDENT:i                               {:String v1 = newTemp();
+                                                LLPLXC.out.println("  "+v1 + " = load i32, i32* %"+i);
+                                                RESULT = v1;:}
+
+        | ENTERO:n                              {:RESULT = n.toString();:}
+       
+        | IDENT:i EQLN expresion:e              {:LLPLXC.out.println("  store i32 "+e+" , i32* %"+i);
+                                                RESULT = e;:}
+        | AP expresion:e CP                     {:RESULT = e;:}
+        | MENOS expresion:e                     {:String vdest = newTemp();
+                                                LLPLXC.out.println("  "+vdest + " = sub i32 0, "+e);
+                                                RESULT = vdest;:} %prec MENOSUNARIO
+        |declararVariables
+        |
+        ;
+    
+declararVariables ::=IDENT IDENT:v                 {:LLPLXC.out.println("  %"+v+" = alloca i32, align 4");
+                                                           LLPLXC.out.println("  store i32 0"+" , i32* %"+v);:}
+                    |IDENT IDENT:v COMA              {:LLPLXC.out.println("  %"+v+" = alloca i32, align 4");
+                                                           LLPLXC.out.println("  store i32 0"+" , i32* %"+v);:}  resto      
+                    ;
+
+resto ::= IDENT:var COMA resto                              {:LLPLXC.out.println("  %"+var+" = alloca i32, align 4");
+                                                            LLPLXC.out.println("  store i32 0"+" , i32* %"+var);:}
+        | IDENT:var                                         {:LLPLXC.out.println("  %"+var+" = alloca i32, align 4");
+                                                            LLPLXC.out.println("  store i32 0"+" , i32* %"+var);:}
+        ;
+
+condicion ::= expresion:e1 IGUAL expresion:e2   {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                String temp = newTemp();
+                                                LLPLXC.out.println("  "+temp+" = icmp eq i32 "+e1+" , "+e2);
+                                                LLPLXC.out.println("  br i1 "+temp+", label %"+v1+" , label %"+v2);
+                                                RESULT = new ParEt(v1,v2);:}
+
+        | expresion:e1 DIFERENTE expresion:e2     {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                String temp = newTemp();
+                                                LLPLXC.out.println("  "+temp+" = icmp ne i32 "+e1+" , "+e2);
+                                                LLPLXC.out.println("  br i1 "+temp+", label %"+v1+" , label %"+v2);
+                                                RESULT = new ParEt(v1,v2);:} 
+
+        | expresion:e1 MENOR EQLN expresion:e2  {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                String temp = newTemp();
+                                                LLPLXC.out.println("  "+temp+" = icmp sle i32 "+e1+" , "+e2);
+                                                LLPLXC.out.println("  br i1 "+temp+", label %"+v1+" , label %"+v2);
+                                                RESULT = new ParEt(v1,v2);:}   
+
+
+        | expresion:e1 MENOR  expresion:e2  {:  String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                String temp = newTemp();
+                                                LLPLXC.out.println("  "+temp+" = icmp slt i32 "+e1+" , "+e2);
+                                                LLPLXC.out.println("  br i1 "+temp+", label %"+v1+" , label %"+v2);
+                                                RESULT = new ParEt(v1,v2);:}     
+
+        | expresion:e1 MAYOR EQLN expresion:e2  {:String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                String temp = newTemp();
+                                                LLPLXC.out.println("  "+temp+" = icmp sge i32 "+e1+" , "+e2);
+                                                LLPLXC.out.println("  br i1 "+temp+", label %"+v1+" , label %"+v2);
+                                                RESULT = new ParEt(v1,v2);:}
+        | expresion:e1 MAYOR  expresion:e2  {:  String v1 = newEtiq();
+                                                String v2 = newEtiq();
+                                                String temp = newTemp();
+                                                LLPLXC.out.println("  "+temp+" = icmp sgt i32 "+e1+" , "+e2);
+                                                LLPLXC.out.println("  br i1 "+temp+", label %"+v1+" , label %"+v2);
+                                                RESULT = new ParEt(v1,v2);:}    
+            
+        | condicion:c1 AND                      {:LLPLXC.out.println(c1.sv + ":");:} 
+        condicion:c2                            {:LLPLXC.out.println(c1.sf + ":");
+                                                  LLPLXC.out.println("  br label %"+c2.sf+";");
+                                                  RESULT = c2;:}
+                                                  
+        | condicion:c1 O                       {:LLPLXC.out.println(c1.sf + ":");:} 
+        condicion:c2                            {:LLPLXC.out.println(c1.sv + ":");
+                                                  LLPLXC.out.println("  br label %"+c2.sv+";");
+                                                  RESULT = c2;:}
+        | AP condicion:c CP                     {:RESULT = c;:}                                   
+
+        |EX condicion:e                         {:RESULT = new ParEt(e.sf,e.sv);:}                                         
+        ;

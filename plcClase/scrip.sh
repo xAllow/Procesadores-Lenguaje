@@ -16,7 +16,7 @@ if [ $? -eq 0 ]; then
     echo "Compilación exitosa. Ejecutando el programa..."
     
     # Ejecutar el programa Java con el nombre proporcionado por el usuario
-    java -cp /usr/share/java/java-cup-0.11b-runtime.jar:. PLC d2.pl prog.ctd
+    java -cp /usr/share/java/java-cup-0.11b-runtime.jar:. PLC a1.pl prog.ctd
     echo -e "\nEjecución completada."
 
 else

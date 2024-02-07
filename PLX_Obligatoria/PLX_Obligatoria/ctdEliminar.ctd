@@ -1,0 +1,30 @@
+	$v0[0]=104;
+	$v0[1]=111;
+	$v0[2]=108;
+	$v0[3]=97;
+	$$v0_length=4;
+	$a_length=0;
+	$v1=0;
+E0:
+	if ($v1<$$v0_length) goto E1;
+	goto E2;
+E1:
+	$v2=$v0[$v1];
+E3:
+	a[$a_length]=$v2;
+	$a_length=$a_length+1;
+E4:
+	$v1=$v1+1;
+	goto E0;
+E2:
+	$v3=0;
+E5:
+	if ($v3<$a_length) goto E6;
+	goto E7;
+E6:
+	$v4=a[$v3];
+	writec $v4;
+	$v3=$v3+1;
+	goto E5;
+E7:
+	writec 10;

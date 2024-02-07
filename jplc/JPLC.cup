@@ -1,0 +1,28 @@
+import java_cup.runtime.*;
+
+terminal AP, CP;
+terminal String IDENT;
+
+non terminal sentencia, lista_de_sent;
+
+lista_de_sent ::= sentencia lista_de_sent
+                | sentencia
+                ;
+
+sentencia ::= IDENT:tipo IDENT:nombre AP {:JPLC.out.println(".method public static "+nombre +"(I)I");:}
+            IDENT:tipoArg IDENT:var 
+            CP AC sentencia CC {:JPLC.out.println("ireturn");
+                                JPLC.out.println("nop");
+                                JPLC.out.println(".limit stack "+limitStack);
+                                JPLC.out.println(".limit locals "+ limitLocal);
+                                JPLC.out.println(".end method");:}
+
+expresion ::= IDENT IGUAL expresion PYC     {:JPLC.out.println("sipush "+ n);
+                                            JPLC.out.println("istore "+limitLocal);
+                                            map.put(var, limitLocal);
+                                            limitLocal++;:}
+            | expresion MAS expresion
+            | expresion MENOS expresion
+            | expresion POR expresion
+            | expresion DIV expresion
+            | ENTERO:n                      {:RESULT = n.toString();:}
