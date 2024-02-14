@@ -1,7 +1,7 @@
 import java_cup.runtime.*;
 import java.util.*;
 action code{:
-    Map<String, String> map = new Hashmap<>();
+    Map<String, String> map = new HashMap<>();
     int numEt = 0;
     int numVar = 0;
     String et1 = "";

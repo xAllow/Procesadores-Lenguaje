@@ -4,6 +4,7 @@
 //----------------------------------------------------
 
 import java_cup.runtime.*;
+import java.util.*;
 import java_cup.runtime.XMLElement;
 
 /** CUP v0.11b 20160615 generated parser.
@@ -385,7 +386,7 @@ public class parser extends java_cup.runtime.lr_parser {
 class CUP$parser$actions {
 
 
-   
+    Map<String, String> map = new HashMap<>();
     int numEt = 0;
     int numVar = 0;
     String et1 = "";
@@ -926,6 +927,7 @@ if(!t.contiene(i)){
                                                     Instancia ins = new Instancia(i,tip,t.bActual, true);
                                                     t.addObj(ins);
                                                     }
+                                                    map.put(i, tip.getNombre());
                                                 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$11",20, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }

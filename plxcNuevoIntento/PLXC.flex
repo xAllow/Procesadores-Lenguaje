@@ -24,6 +24,7 @@ import java_cup.runtime.*;
 \/                          {return new Symbol(sym.DIV);}
 \<                          {return new Symbol(sym.MENOR);}
 \>                          {return new Symbol(sym.MAYOR);}
+"true"|"false"               {return new Symbol(sym.BOOLEAN, yytext());}
 0|[1-9][0-9]*               {return new Symbol(sym.ENTERO, new Integer(yytext()));}
 \'[a-z]|[A-Z0-9]|[&]|\\\\\'           {return new Symbol(sym.ASCII,yytext());}
 "(int)"                       {return new Symbol(sym.CASTINT, yytext());}

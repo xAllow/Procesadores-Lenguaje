@@ -16,7 +16,7 @@ if [ $? -eq 0 ]; then
     echo "Compilación exitosa. Ejecutando el programa..."
     
     # Ejecutar el programa Java con el nombre proporcionado por el usuario
-    java -cp /usr/share/java/java-cup-0.11b-runtime.jar:. PLXC plxc-init/exp1.plx prog.ctd
+    java -cp /usr/share/java/java-cup-0.11b-runtime.jar:. PLXC prueba.ctd prog.ctd
     echo -e "\nEjecución completada."
 
 else

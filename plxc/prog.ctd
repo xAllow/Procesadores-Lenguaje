@@ -1,3 +1,27 @@
-writec 97;
-writec 98;
-writec 99;
+L0:
+if (i < 10) goto L2;
+goto L3;
+L1:
+t0 = i + 1;
+i = t0;
+goto L0;
+L2:
+k = 2;
+L4:
+if (j < k) goto L6;
+goto L7;
+L5:
+t1 = j + i;
+j = t1;
+goto L4;
+L6:
+t2 = k * i;
+k = t2;
+t3 = x + i;
+x = t3;
+print x;
+goto L5;
+L7:
+goto L1;
+L3:
+print x;

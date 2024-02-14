@@ -36,6 +36,11 @@ action code{:
                 Objeto o1 = new Instancia(nombre, TChar.getInstancia(), t.bActual, true);
                 t.addObj(o1);
                 break;
+            case "boolean":
+                if(t.contiene(nombre, t.bActual)){}
+                Objeto o2 = new Instancia(nombre, TBoolean.getInstancia(), t.bActual, true);
+                t.addObj(o2);
+                break;
         }
     }
 
@@ -44,13 +49,22 @@ action code{:
             case "int":
                 break;
             case "char":
-                System.out.println("AQUI");
                 if(t.contiene(nombre, t.bActual)){}
                 Objeto o = new Instancia(nombre, TChar.getInstancia(), t.bActual, true);
                 Vector<Objeto> pc = new Vector<>();
                 pc.add(ob);
                 o.metodos("asigna", pc);
                 t.addObj(o);
+                break;
+            case "boolean":
+                System.out.println("AQUI");
+                if(t.contiene(nombre, t.bActual)){}
+                Objeto o1 = new Instancia(nombre, TBoolean.getInstancia(), t.bActual, true);
+                Vector<Objeto> pb = new Vector<>();
+                pb.add(ob);
+                o1.metodos("asigna", pb);
+                t.addObj(o1);
+    
                 break;
         }
     }
@@ -60,7 +74,7 @@ terminal AP, CP, AC, CC,EQLN, EX,AND, MAS, MENOS, POR, O , PYC, DIV, IGUAL, DIFE
 terminal String IF, ELSE, WHILE, DO,  FOR, PRINT, INT;
 terminal Integer ENTERO;
 terminal MENOSUNARIO;
-terminal String IDENT, ASCII, UNICODE;
+terminal String IDENT, ASCII, UNICODE, BOOLEAN;
 
 non terminal lista_de_sent;
 non terminal sentencia;
@@ -72,7 +86,7 @@ non terminal else_if;
 non terminal etqW;
 non terminal declararVar;
 non terminal masVar;
-
+non terminal ParEt ifComplejo;
 
 precedence left IF, ELSE, DO, WHILE, FOR, PRINT;
 precedence left MAS, MENOS;
@@ -88,7 +102,7 @@ lista_de_sent ::= sentencia lista_de_sent
                 ;
 
 sentencia ::= expresion PYC
-        | IF etqF:f AP condicion:c              {:PLXC.out.println(c.sv + ":");:}    
+        | IF etqF:f AP ifComplejo:c               {:PLXC.out.println(c.sv + ":");:} 
 
         CP sentencia                            {:PLXC.out.println("goto " + f + ";");
                                                   PLXC.out.println(c.sf + ":");:}  
@@ -119,6 +133,9 @@ sentencia ::= expresion PYC
                                                   t.bActual=b.intValue();:}         
         ;
 
+ifComplejo ::= condicion:c                      {:RESULT= c;:}
+            | IDENT:i       
+            ;
 etqF    ::= {:RESULT = newEtiq();:}
         ;
 
@@ -149,7 +166,7 @@ expresion ::= expresion:e1 MAS expresion:e2     {:Vector<Objeto> v = new Vector<
                                                   Objeto o = t.objeto(i);
                                                   if(!(o instanceof Instancia)) {}
                                                   RESULT = o;:}
-
+        | BOOLEAN:b                             {:RESULT = new Instancia(b, TBoolean.getInstancia(), TablaSimbolos.bActual, false);:}
         | ENTERO:n                              {:RESULT = new Instancia(n.toString(), TInt.getInstancia(), TablaSimbolos.bActual, false);:}
         | UNICODE:u                             {:RESULT = new Instancia(u, TChar.getInstancia(), TablaSimbolos.bActual, false);:}
         | ASCII:c                               {:RESULT = new Instancia(String.valueOf((int)c.charAt(0)), TChar.getInstancia(), TablaSimbolos.bActual, false);:}
@@ -170,13 +187,14 @@ expresion ::= expresion:e1 MAS expresion:e2     {:Vector<Objeto> v = new Vector<
                                                   Objeto aux = new Instancia("0", TInt.getInstancia(), TablaSimbolos.bActual, false);
                                                   RESULT = e.metodos("resta",v);:} %prec MENOSUNARIO
         | declararVar
+        |
         ;
     
 declararVar ::= IDENT:tipo IDENT:n              {:declararBasico(tipo,n);:}
             |   IDENT:tipo IDENT:n COMA         {:tipoTemp = tipo;
                                                   declararBasico(tipo,n);
                                                 :} masVar
-            | IDENT:tipo IDENT:n EQLN expresion:e {:declararComplejo(tipo, n, e);:}                                            
+            | IDENT:tipo IDENT:n EQLN expresion:e {:System.out.println("AQUI");declararComplejo(tipo, n, e);:}                                            
             ;
 
 masVar ::=  IDENT:i                             {:declararBasico(tipoTemp,i);:}

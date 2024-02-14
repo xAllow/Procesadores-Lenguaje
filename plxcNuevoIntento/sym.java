@@ -22,6 +22,7 @@ public class sym {
   public static final int DIV = 14;
   public static final int CC = 5;
   public static final int IF = 26;
+  public static final int BOOLEAN = 38;
   public static final int EOF = 0;
   public static final int error = 1;
   public static final int COMA = 19;
@@ -82,7 +83,8 @@ public class sym {
   "MENOSUNARIO",
   "IDENT",
   "ASCII",
-  "UNICODE"
+  "UNICODE",
+  "BOOLEAN"
   };
 }
 
